@@ -9,7 +9,18 @@ function LinvoDB(dataPath)
 
     mkdirp.sync(dbPath);
     
-
+    /* The model constructor - this creates a model
+     */
+    linvodb.Model = function Model(name, schema, options)
+    {
+        options = options || {};
+        // TODO: err check, validation
+    };
+    
+    /*
+     * events: updated [ids]
+     */
+    
     return linvodb;
 };
 
