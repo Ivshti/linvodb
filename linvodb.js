@@ -6,7 +6,6 @@ function LinvoDB(dataPath)
 {
     var linvodb = { },
         dbPath = path.join(dataPath+"", "db"); // since the object can be from node-webkit, it might be detected as..not a string; so concat it with an empty one
-
     mkdirp.sync(dbPath);
     
     /* The model constructor - this creates a model
@@ -22,9 +21,21 @@ function LinvoDB(dataPath)
         var instanceMethods = { };
         
         /* The instance constructor
+         * TODO: put that in separate file?
          */
         var model = linvodb.models[name] = function(doc) 
         {
+            var instance = doc; // TODO: create an empty object from the schema and extend it with doc
+            // TODO: genete an _id
+
+            instance.prototype.save = function() {
+                console.log("saving ",instance)
+            };
+            instance.prototype.remove = function() {
+                console.log("removing ",instance);
+            };
+            
+            return instance;
         };
         
         model.store = db;
