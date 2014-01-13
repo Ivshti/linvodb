@@ -18,26 +18,26 @@ function LinvoDB(dataPath)
         if (typeof(schema) != "object") throw new Error("model schema must be an object");
         
         var db = new nedb({ filename: path.join(dbPath, name), autoload: true });
-        var instanceMethods = { };
         
         /* The instance constructor
-         * TODO: put that in separate file?
          */
-        var model = linvodb.models[name] = function(doc) 
+        var model = linvodb.models[name] = function Document(doc) 
         {
-            var instance = doc; // TODO: create an empty object from the schema and extend it with doc
+            //var instance = doc; // TODO: create an empty object from the schema and extend it with doc
             // TODO: genete an _id
-
-            instance.prototype.save = function() {
-                console.log("saving ",instance)
-            };
-            instance.prototype.remove = function() {
-                console.log("removing ",instance);
-            };
-            
-            return instance;
+            this.doc = doc;
         };
         
+        /* Instance methods
+         */
+        model.prototype.save = function() {
+            console.log("saving ",this);                
+        };
+        
+        /* Static methods
+         */
+        
+
         model.store = db;
         return model;
     };
