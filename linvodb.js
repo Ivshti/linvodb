@@ -2,6 +2,7 @@ var nedb = require("nedb");
 var mkdirp = require("mkdirp");
 var path = require("path");
 var _ = require("underscore");
+var EventEmitter = require("events").EventEmitter;
 
 function LinvoDB(dataPath)
 {
@@ -14,12 +15,14 @@ function LinvoDB(dataPath)
     linvodb.models = {}; // An easy way to access all models
     linvodb.Model = function Model(name, schema, options)
     {
-        options = options || {};
         if (typeof(name) != "string") throw new Error("model name must be a string");
         if (typeof(schema) != "object") throw new Error("model schema must be an object");
+        options = options || {};
         
         var db = new nedb({ filename: path.join(dbPath, name), autoload: true });
-        
+
+        /* Inflate the schema object / create the base document
+         */
         var fullSchema = {};
         _.each(schema, function(val, key)
         {
@@ -32,13 +35,22 @@ function LinvoDB(dataPath)
         {
             baseDoc[key] = val.default || new val.type();
         });
+        
+        
+        /* Small helpers/utilities
+         */
+        var hookEvent = function(ev, fn) {
+            return function() {
+                model.emit(ev);
+                fn.apply(this, arguments);
+            };
+        };
 
         /* The instance constructor
          */
         var model = linvodb.models[name] = function Document(doc) 
         {
             //var instance = doc; // TODO: create an empty object from the schema and extend it with doc
-            // TODO: genete an _id
             _.extend(this, baseDoc, doc || {});
             this.validate();
         };
@@ -52,10 +64,11 @@ function LinvoDB(dataPath)
         model.prototype.save = function(cb)
         {
             //this.validate()
-            db.update({ _id: this._id }, { $set: this }, { upsert: true }, cb);
+            db.update({ _id: this._id }, { $set: this }, { upsert: true }, hookEvent("updated", cb));
             console.log("saving ",this);
+            // TODO: save and then update the _id
         };
-        model.prototype.remove = function(cb) { db.remove({ _id: this._id }, cb) };
+        model.prototype.remove = function(cb) { db.remove({ _id: this._id }, hookEvent("updated", cb)) };
         
         
         /* Static methods
@@ -64,6 +77,7 @@ function LinvoDB(dataPath)
         //model.static
         //model.method
         
+        // Query
         model.find = function(query, cb) 
         {
             db.find(query, function(err, res)
@@ -72,23 +86,19 @@ function LinvoDB(dataPath)
             });
         };
         model.count = function(query, cb) { db.count(query, cb) };
-        model.remove = function(query, options, callback) { db.remove(query, options, callback) };
-        model.update = function(query, update, options, callback) { db.update(query, update, options, callback) };
-        model.insert = function(docs, cb) { db.insert(docs, cb) };
-        //model.findOne
-        //model.remove
-        //model.update
-        //model.count
-        //model.insert
+
+        // Modification
+        model.remove = function(query, options, cb) { db.remove(query, options, hookEvent("updated", cb)) };
+        model.update = function(query, update, options, cb) { db.update(query, update, options, hookEvent("updated", cb)) };
+        model.insert = function(docs, cb) { db.insert(docs, hookEvent("updated", cb)) };
+
+        // Support event emitting
+        _.extend(model, new EventEmitter());
 
         model.store = db;
         return model;
     };
-    
-    /*
-     * events: updated [ids]
-     */
-    
+
     return linvodb;
 };
 
