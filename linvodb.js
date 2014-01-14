@@ -20,13 +20,16 @@ function LinvoDB(dataPath)
         
         var db = new nedb({ filename: path.join(dbPath, name), autoload: true });
         
+        //var schema = 
+        //var baseDoc = 
+
         /* The instance constructor
          */
         var model = linvodb.models[name] = function Document(doc) 
         {
             //var instance = doc; // TODO: create an empty object from the schema and extend it with doc
             // TODO: genete an _id
-            _.extend(this, doc || {});
+            _.extend(this, baseDoc, doc || {});
             this.validate();
         };
         
@@ -51,11 +54,17 @@ function LinvoDB(dataPath)
         //model.static
         //model.method
         
-        model.find = function(query, cb) { db.find(query, cb) };
-        model.count = function(query, cb) { db.find(query, cb) };
-        model.remove = function(query, options, callback) { db.find(query, options, callback) };
-        model.update = function(query, update, options, callback) { db.find(query, update, options, callback) };
-        model.insert = function(docs, cb) { db.find(docs, cb) };
+        model.find = function(query, cb) 
+        {
+            db.find(query, function(err, res)
+            {
+                cb(err, res && res.map(function(x) { return new model(x) }));
+            });
+        };
+        model.count = function(query, cb) { db.count(query, cb) };
+        model.remove = function(query, options, callback) { db.remove(query, options, callback) };
+        model.update = function(query, update, options, callback) { db.update(query, update, options, callback) };
+        model.insert = function(docs, cb) { db.insert(docs, cb) };
         //model.findOne
         //model.remove
         //model.update
