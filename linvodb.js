@@ -20,8 +20,18 @@ function LinvoDB(dataPath)
         
         var db = new nedb({ filename: path.join(dbPath, name), autoload: true });
         
-        //var schema = 
-        //var baseDoc = 
+        var fullSchema = {};
+        _.each(schema, function(val, key)
+        {
+            if (typeof(val) == "object" && val.type) fullSchema[key] = val;
+            fullSchema[key] = { type: val };
+        }); 
+        
+        var baseDoc = {};
+        _.each(fullSchema, function(val, key)
+        {
+            baseDoc[key] = val.default || new val.type();
+        });
 
         /* The instance constructor
          */
