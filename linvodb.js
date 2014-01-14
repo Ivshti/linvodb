@@ -50,10 +50,12 @@ function LinvoDB(dataPath)
         //model.virtual
         //model.static
         //model.method
-        model.find = function(query, cb)
-        {
-            db.find(query, cb);
-        };
+        
+        model.find = function(query, cb) { db.find(query, cb) };
+        model.count = function(query, cb) { db.find(query, cb) };
+        model.remove = function(query, options, callback) { db.find(query, options, callback) };
+        model.update = function(query, update, options, callback) { db.find(query, update, options, callback) };
+        model.insert = function(docs, cb) { db.find(docs, cb) };
         //model.findOne
         //model.remove
         //model.update
