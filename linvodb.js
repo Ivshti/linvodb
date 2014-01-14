@@ -1,6 +1,7 @@
 var nedb = require("nedb");
 var mkdirp = require("mkdirp");
 var path = require("path");
+var _ = require("underscore");
 
 function LinvoDB(dataPath)
 {
@@ -25,7 +26,8 @@ function LinvoDB(dataPath)
         {
             //var instance = doc; // TODO: create an empty object from the schema and extend it with doc
             // TODO: genete an _id
-            this.doc = doc;
+            _.extend(this, doc || {});
+            //this.validate();
         };
         
         /* Instance methods
