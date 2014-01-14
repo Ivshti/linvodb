@@ -27,18 +27,38 @@ function LinvoDB(dataPath)
             //var instance = doc; // TODO: create an empty object from the schema and extend it with doc
             // TODO: genete an _id
             _.extend(this, doc || {});
-            //this.validate();
+            this.validate();
         };
         
         /* Instance methods
          */
-        model.prototype.save = function() {
-            console.log("saving ",this);                
+        model.prototype.validate = function()
+        {
+            console.log("validating ",this);
         };
+        model.prototype.save = function(cb)
+        {
+            //this.validate()
+            db.update({ _id: this._id }, { $set: this }, { upsert: true }, cb);
+            console.log("saving ",this);
+        };
+        model.prototype.remove = function(cb) { db.remove({ _id: this._id }, cb) };
+        
         
         /* Static methods
          */
-        
+        //model.virtual
+        //model.static
+        //model.method
+        model.find = function(query, cb)
+        {
+            db.find(query, cb);
+        };
+        //model.findOne
+        //model.remove
+        //model.update
+        //model.count
+        //model.insert
 
         model.store = db;
         return model;
