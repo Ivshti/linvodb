@@ -50,10 +50,11 @@ function LinvoDB(dataPath)
          */
         var model = linvodb.models[name] = function Document(doc) 
         {
-            //var instance = doc; // TODO: create an empty object from the schema and extend it with doc
+            // TODO: check if this is already an instance of Document and return it (+validate) if it is
             _.extend(this, baseDoc, doc || {});
             this.validate();
         };
+        var toModelInstance = function(x) { return new model(x) };
         
         /* Instance methods
          */
@@ -82,7 +83,7 @@ function LinvoDB(dataPath)
         {
             db.find(query, function(err, res)
             {
-                cb(err, res && res.map(function(x) { return new model(x) }));
+                cb(err, res && res.map(toModelInstance));
             });
         };
         model.count = function(query, cb) { db.count(query, cb) };
@@ -90,7 +91,7 @@ function LinvoDB(dataPath)
         // Modification
         model.remove = function(query, options, cb) { db.remove(query, options, hookEvent("updated", cb)) };
         model.update = function(query, update, options, cb) { db.update(query, update, options, hookEvent("updated", cb)) };
-        model.insert = function(docs, cb) { db.insert(docs, hookEvent("updated", cb)) };
+        model.insert = function(docs, cb) { db.insert(docs.map(toModelInstance), hookEvent("updated", cb)) };
 
         // Support event emitting
         _.extend(model, new EventEmitter());
