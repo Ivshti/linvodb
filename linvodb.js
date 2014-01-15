@@ -50,7 +50,9 @@ function LinvoDB(dataPath)
          */
         var model = linvodb.models[name] = function Document(doc) 
         {
-            // TODO: check if this is already an instance of Document and return it (+validate) if it is
+            if (doc.constructor.name == "Document")
+                return;
+
             _.extend(this, baseDoc, doc || {});
             this.validate();
         };
@@ -64,10 +66,15 @@ function LinvoDB(dataPath)
         };
         model.prototype.save = function(cb)
         {
-            //this.validate()
-            db.update({ _id: this._id }, { $set: this }, { upsert: true }, hookEvent("updated", cb));
-            console.log("saving ",this);
-            // TODO: save and then update the _id
+            this.validate();
+            var doc = this,
+                callback = function(err) { cb(err, doc) };
+            
+            db.findOne({ _id: doc._id }, function(err, isIn)
+            {
+                if (isIn) db.update({ _id: doc._id }, { $set: doc }, {}, hookEvent("updated", callback));
+                else db.insert(doc, hookEvent("updated", callback));
+            });
         };
         model.prototype.remove = function(cb) { db.remove({ _id: this._id }, hookEvent("updated", cb)) };
         
