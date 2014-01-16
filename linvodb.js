@@ -50,8 +50,8 @@ function LinvoDB(dataPath)
          */
         var model = linvodb.models[name] = function Document(doc) 
         {
-            if (doc.constructor.name == "Document")
-                return;
+            if (doc && doc.constructor.name == "Document")
+                return doc;
 
             _.extend(this, baseDoc, doc || {});
             this.validate();
