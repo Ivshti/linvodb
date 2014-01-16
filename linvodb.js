@@ -73,7 +73,7 @@ linvodb.Model = function Model(name, schema, options)
     {
         this.validate();
         var doc = this,
-            callback = function(err) { cb(err, doc) };
+            callback = function(err) { cb && cb(err, doc) };
         
         db.findOne({ _id: doc._id }, function(err, isIn)
         {
