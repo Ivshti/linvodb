@@ -4,7 +4,6 @@ var path = require("path");
 var _ = require("underscore");
 var EventEmitter = require("events").EventEmitter;
 
-
 var linvodb = { };
 
 linvodb.init = function(dataPath)
@@ -72,19 +71,24 @@ linvodb.Model = function Model(name, schema, options)
     model.prototype.save = function(cb)
     {
         this.validate();
-        var doc = this,
-            callback = function(err) { cb && cb(err, doc) };
+        var doc = this.toObject(), // we need to copy this in order to avoid Document instances getting into NeDB
+            self = this,
+            callback = function(err) { self._id = doc._id; cb && cb(err, self) };
         
         db.findOne({ _id: doc._id }, function(err, isIn)
         {
-            delete doc.$$hashKey; /* This is something from Angular that breaks stuff */
-            if (isIn) db.update({ _id: isIn._id }, doc, { }, hookEvent("updated", callback));
+            if (isIn) db.update({ _id: isIn._id }, _.omit(doc, "$$hashKey"), { }, hookEvent("updated", callback));
             else db.insert(doc, hookEvent("updated", callback));
         });
     };
     model.prototype.remove = function(cb) { db.remove({ _id: this._id }, hookEvent("updated", cb)) };
     
-    model.prototype.toObject = function() { return JSON.parse(JSON.stringify(this)) };
+    model.prototype.toObject = function()
+    {
+        var obj = {};
+        _.each(this, function(val, key) { obj[key] = val })
+        return obj;
+    };
     model.prototype.copy = function() { return new model(this.toObject()) };
     
     /* Static methods
@@ -123,7 +127,7 @@ linvodb.Model = function Model(name, schema, options)
     // Modification
     model.remove = function(query, options, cb) { db.remove(query, options, hookEvent("updated", cb)) };
     model.update = function(query, update, options, cb) { db.update(query, update, options, hookEvent("updated", cb)) };
-    model.insert = function(docs, cb) { db.insert(docs.map(toModelInstance), hookEvent("updated", cb)) };
+    model.insert = function(docs, cb) { db.insert(docs.map(toModelInstance).map(function(doc) { return doc.toObject() }), hookEvent("updated", cb)) };
 
     // Support event emitting
     _.extend(model, new EventEmitter());
