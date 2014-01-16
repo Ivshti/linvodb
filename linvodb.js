@@ -84,6 +84,8 @@ linvodb.Model = function Model(name, schema, options)
     };
     model.prototype.remove = function(cb) { db.remove({ _id: this._id }, hookEvent("updated", cb)) };
     
+    model.prototype.toObject = function() { return JSON.parse(JSON.stringify(this)) };
+    model.prototype.copy = function() { return new model(this.toObject()) };
     
     /* Static methods
      */
