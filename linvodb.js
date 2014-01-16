@@ -99,6 +99,23 @@ linvodb.Model = function Model(name, schema, options)
         });
     };
     model.count = function(query, cb) { db.count(query, cb) };
+    
+    model.live = function(query)
+    {
+        var handle = { res: [], err: null };
+        var update = function()
+        { 
+            model.find(query, function(err, res)
+            { 
+                handle.err = err; handle.res = res; 
+                model.emit("liveQueryUpdate"); 
+            });
+        };
+        update();
+        model.on("updated", update);
+        
+        return handle;
+    };
 
     // Modification
     model.remove = function(query, options, cb) { db.remove(query, options, hookEvent("updated", cb)) };
@@ -119,6 +136,7 @@ linvodb.createService = function(module, model)
     module.factory(model.modelName, ["$rootScope", function($rootScope) 
     {
         model.on("update", function() { $rootScope.$apply() });
+        model.on("liveQueryUpdate", function() { $rootScope.$apply() });
         return model;
     }]);
 };
