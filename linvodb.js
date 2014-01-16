@@ -62,7 +62,7 @@ function LinvoDB(dataPath)
          */
         model.prototype.validate = function()
         {
-            console.log("validating ",this);
+            // TODO
         };
         model.prototype.save = function(cb)
         {
