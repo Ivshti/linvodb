@@ -103,8 +103,19 @@ function LinvoDB(dataPath)
         // Support event emitting
         _.extend(model, new EventEmitter());
 
+        model.modelName = name;
         model.store = db;
         return model;
+    };
+    
+    
+    linvodb.createService = function(module, model)
+    {
+        module.factory(model.modelName, ["$rootScope", function($rootScope) 
+        {
+            model.on("update", function() { $rootScope.$apply() });
+            return model;
+        }]);
     };
 
     return linvodb;
