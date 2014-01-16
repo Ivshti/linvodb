@@ -73,7 +73,11 @@ linvodb.Model = function Model(name, schema, options)
         this.validate();
         var doc = this.toObject(), // we need to copy this in order to avoid Document instances getting into NeDB
             self = this,
-            callback = function(err) { self._id = doc._id; cb && cb(err, self) };
+            callback = function(err)
+            { 
+                _.extend(self, { _id: doc._id, _ctime: doc._ctime });
+                cb && cb(err, self);
+            };
         
         db.findOne({ _id: doc._id }, function(err, isIn)
         {
