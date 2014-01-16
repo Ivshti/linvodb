@@ -77,7 +77,7 @@ linvodb.Model = function Model(name, schema, options)
         
         db.findOne({ _id: doc._id }, function(err, isIn)
         {
-            if (isIn) db.update({ _id: doc._id }, { $set: doc }, {}, hookEvent("updated", callback));
+            if (isIn) db.update({ _id: doc._id }, doc, {}, hookEvent("updated", callback));
             else db.insert(doc, hookEvent("updated", callback));
         });
     };
