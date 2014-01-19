@@ -41,7 +41,8 @@ linvodb.Model = function Model(name, schema, options)
     var screenDoc = {};
     // TODO: generate screen document, general gist is: recursively replace OBJ with OBJ.type (if .type exists)
     screenDoc = _.clone(schema);
-    
+    _.extend(screenDoc, { _id: "string", _mtime: true, _ctime: true });
+
     /* Small helpers/utilities
      */
     var hookEvent = function(ev, fn) {
@@ -69,6 +70,9 @@ linvodb.Model = function Model(name, schema, options)
     {
         // See this http://mongoosejs.com/docs/2.7.x/docs/validation.html
         // TODO
+        var valid = screener.api(this, screenDoc), self = this;
+        _.extend(this, valid);
+        _.keys(this).forEach(function(key) { if (! valid.hasOwnProperty(key)) delete self[key] });
     };
     model.prototype.save = function(cb)
     {
