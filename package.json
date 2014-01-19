@@ -12,6 +12,7 @@
   "dependencies" : {
     "nedb":  "https://github.com/Ivshti/nedb",
     "mkdirp": ">=0.3.5",
-    "underscore": ">=1.4.4" 
+    "underscore": ">=1.4.4",
+    "screener": ">=0.0.7"
   }
 }

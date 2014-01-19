@@ -3,6 +3,7 @@ var mkdirp = require("mkdirp");
 var path = require("path");
 var _ = require("underscore");
 var EventEmitter = require("events").EventEmitter;
+var screener = require("screener");
 
 var linvodb = { };
 
@@ -34,12 +35,12 @@ linvodb.Model = function Model(name, schema, options)
         fullSchema[key] = { type: val };
     }); 
     
-    var baseDoc = {};
-    _.each(fullSchema, function(val, key)
-    {
-        baseDoc[key] = val.default || new val.type();
-    });
-    
+    var baseDoc = screener.api({ }, schema);
+    // TODO: respect default values; that's what we need the baseDoc for
+
+    var screenDoc = {};
+    // TODO: generate screen document, general gist is: recursively replace OBJ with OBJ.type (if .type exists)
+    screenDoc = _.clone(schema);
     
     /* Small helpers/utilities
      */
