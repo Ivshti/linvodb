@@ -66,6 +66,7 @@ linvodb.Model = function Model(name, schema, options)
      */
     model.prototype.validate = function()
     {
+        // See this http://mongoosejs.com/docs/2.7.x/docs/validation.html
         // TODO
     };
     model.prototype.save = function(cb)
