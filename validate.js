@@ -27,36 +27,37 @@ function specType(spec) {
     } else return typeof spec;
 }
 
-function screen(object, spec, _options) {
+var globalSpec = {
+    "_id": "string", // TODO: regexp
+    "_ctime": "date",
+    "_mtime": "date"
+};
+
+function screen(object, spec) {
     var result, prop, propResult;
-    var options = _options || {};
-    var globalSpec = options.globalSpec;
 
     var specT = specType(spec);
     if (specT === 'array') {
         if (!Array.isArray(object)) {
 
-            if (options.exact) throw new Error("Field is not array");
+            //throw new Error("Field is not array");
 
-            if (options.fill) return [];
-            return undefined;
+            return [];
         }
 
         result = [];
         spec = spec[0];
         for (var i = 0; i < object.length; ++i) {
-            var res = screen(object[i], spec, options);
+            var res = screen(object[i], spec);
 
             if (typeof res !== 'undefined') {
                 result.push(res);
             }
-            else if(options.exact) {
-                throw new Error("Element " + i + " in array field has wrong type");
-            }
+            //else throw new Error("Element " + i + " in array field has wrong type");
         }
         return result;
     } else if (specT === 'string') {
-        return screen(object, screens[spec], options);
+        return screen(object, screens[spec]);
     } else if (specT === 'function') {
         return spec(object);
     }
@@ -70,17 +71,17 @@ function screen(object, spec, _options) {
         for (prop in object) {
 
             if (specType(object[prop]) === 'object') {
-                propResult = screen(object[prop], false, options);
+                propResult = screen(object[prop], false);
                 if (typeof propResult !== 'undefined') {
                     if (!result) result = {};
                     result[prop] = propResult;
-                } else if (options.fill) {
+                } else {
                     result[prop] = null;
                 }
             }
             if (typeof globalSpec[prop] !== 'undefined') {
                 if (object[prop] !== 'undefined') {
-                    propResult = screen(object[prop], globalSpec[prop], options);
+                    propResult = screen(object[prop], globalSpec[prop]);
                     if (typeof propResult !== 'undefined') {
                         if (!result) result = {};
                         result[prop] = propResult;
@@ -93,53 +94,41 @@ function screen(object, spec, _options) {
         var reMatch = object.match(spec);
         if (reMatch && reMatch[0].length == object.length) return object;
     } else if (specT === 'object') {
-        result = {};
+        result = object || {};
         // check for existance of properties in the global spec (which can whitelist fields in any object)
         if (typeof globalSpec === 'object') {
             for (prop in object) {
                 if (typeof globalSpec[prop] === 'undefined') continue;
-                propResult = screen(object[prop], globalSpec[prop], options);
+                propResult = screen(object[prop], globalSpec[prop]);
 
                 if (typeof propResult !== 'undefined') {
                     result[prop] = propResult;
                 }
             }
         }
-        if(!object) {
-            if(options.fill)
-                object = {};
-            else if(options.exact)
-                throw new Error("Missing object: " + prop);
-            else
-                return undefined;
-        }
+
         for (prop in spec) {
             if (typeof object[prop] === 'undefined') {
-                if (options.exact) throw new Error("Missing field: " + prop);
-                if (options.fill) {
-                if(specType(spec[prop]) === 'array')
-          result[prop] = [];
-        else
-                        result[prop] = null;
-                }
-                continue;
+                result[prop] = (specType(spec[prop]) === 'array') ? [] : null; // TODO: fill better
             }
-            propResult = screen(object[prop], spec[prop], options);
+            
+            propResult = screen(object[prop], spec[prop]);
 
             // otherwise copy the result normally
-            else if (typeof propResult !== 'undefined') {
+            if (typeof propResult !== 'undefined') {
                 result[prop] = propResult;
             }
-            // throw error when missing field
-            else if(options.exact) {
-                throw new Error("Screen failed for: " + prop);
-            }
-            // or fill with null if requested
-            else if (options.fill) {
-                result[prop] = null;
-            }
+            else result[prop] = null; // TODO: fill better
 
+            //    throw new Error("Screen failed for: " + prop);
+            
+            // or fill with null if requested
         }
+        for (prop in object) {
+            if (! spec.hasOwnProperty(prop))
+                delete object[prop];
+        }
+        
         return result;
     }
 }
@@ -179,4 +168,4 @@ screen.and = function() {
     };
 };
 
-return screen;
+module.exports = screen;

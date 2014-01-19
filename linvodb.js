@@ -3,7 +3,7 @@ var mkdirp = require("mkdirp");
 var path = require("path");
 var _ = require("underscore");
 var EventEmitter = require("events").EventEmitter;
-var screener = require("screener");
+var screener = require("./validate");
 
 var linvodb = { };
 
@@ -35,7 +35,7 @@ linvodb.Model = function Model(name, schema, options)
         fullSchema[key] = { type: val };
     }); 
     
-    var baseDoc = screener.api({ }, schema);
+    var baseDoc = screener({ }, schema);
     // TODO: respect default values; that's what we need the baseDoc for
 
     var screenDoc = {};
@@ -70,9 +70,7 @@ linvodb.Model = function Model(name, schema, options)
     {
         // See this http://mongoosejs.com/docs/2.7.x/docs/validation.html
         // TODO
-        var valid = screener.api(this, screenDoc), self = this;
-        _.extend(this, valid);
-        _.keys(this).forEach(function(key) { if (! valid.hasOwnProperty(key)) delete self[key] });
+        screener(this, screenDoc)
     };
     model.prototype.save = function(cb)
     {
