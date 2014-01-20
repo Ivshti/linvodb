@@ -1,3 +1,4 @@
+var _ = require("underscore");
 
 var screens = {
     ObjectId: /[0-9a-fA-F]{24}/,
@@ -10,6 +11,12 @@ var screens = {
     'boolean': function(value) {
         if (typeof value === 'boolean') return value;
     },
+    'date': function(value) {
+        if (value instanceof Date) return value;
+    },
+    'regexp': function(value) {
+        if (value instanceof RegExp) return value;
+    },
     'function': function(value) {
         if (typeof value === 'function') return value;
     },
@@ -21,7 +28,6 @@ var screens = {
 function specType(spec) {
     if (typeof spec === 'object') {
         if (Array.isArray(spec)) return 'array';
-        if (spec instanceof RegExp) return "regexp";
         if (spec === null) return "null";
         return 'object';
     } else return typeof spec;
@@ -38,24 +44,10 @@ function screen(object, spec) {
 
     var specT = specType(spec);
     if (specT === 'array') {
-        if (!Array.isArray(object)) {
-
-            //throw new Error("Field is not array");
-
-            return [];
-        }
-
-        result = [];
-        spec = spec[0];
-        for (var i = 0; i < object.length; ++i) {
-            var res = screen(object[i], spec);
-
-            if (typeof res !== 'undefined') {
-                result.push(res);
-            }
-            //else throw new Error("Element " + i + " in array field has wrong type");
-        }
-        return result;
+        if (!Array.isArray(object)) return;
+        return object
+            .map(function(x) { return screen(x, spec[0]) })
+            .filter(function(x) { return x });
     } else if (specT === 'string') {
         return screen(object, screens[spec]);
     } else if (specT === 'function') {
@@ -65,21 +57,20 @@ function screen(object, spec) {
     else if (specT === 'boolean' && spec === true) {
         return object;
     }
-    // false means process to only use global white list - recursively
     else if (specT === 'regexp' && typeof object === 'string') {
         var reMatch = object.match(spec);
         if (reMatch && reMatch[0].length == object.length) return object;
     } else if (specT === 'object') {
         result = object || {};
         // check for existance of properties in the global spec (which can whitelist fields in any object)
-            for (prop in object) {
-                if (typeof globalSpec[prop] === 'undefined') continue;
-                propResult = screen(object[prop], globalSpec[prop]);
+        for (prop in object) {
+            if (typeof globalSpec[prop] === 'undefined') continue;
+            propResult = screen(object[prop], globalSpec[prop]);
 
-                if (typeof propResult !== 'undefined') {
-                    result[prop] = propResult;
-                }
+            if (typeof propResult !== 'undefined') {
+                result[prop] = propResult;
             }
+        }
 
         for (prop in spec) {
             if (typeof object[prop] === 'undefined') {
@@ -98,6 +89,7 @@ function screen(object, spec) {
             
             // or fill with null if requested
         }
+        
         for (prop in object) {
             if (! (spec.hasOwnProperty(prop) || globalSpec.hasOwnProperty(prop)))
                 delete object[prop];
@@ -128,7 +120,6 @@ screen.or = function() {
     };
 };
 
-// TODO: AND should respect options
 screen.and = function() {
     var screens = arguments;
     return function(value) {

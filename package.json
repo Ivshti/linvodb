@@ -10,7 +10,7 @@
     "url": "https://github.com/Ivshti/linvodb.git"
   },
   "dependencies" : {
-    "nedb":  "https://github.com/Ivshti/nedb",
+    "nedb":  "Ivshti/nedb",
     "mkdirp": ">=0.3.5",
     "underscore": ">=1.4.4"
   }
