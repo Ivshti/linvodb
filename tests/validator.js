@@ -9,7 +9,8 @@ var obj = {
     tags: ["business", "personal",3,5], // adding two numbers to see if they would be filtered
     linked_accounts: [
         { type: "facebook", id: 223 },
-        { type: "twitter", id: 55235 }
+        { type: "twitter", id: 55235 },
+        { type: "test" },
     ],
     addon: "some addon data"
 };
@@ -38,7 +39,8 @@ var result = {
     description: "",
     linked_accounts: [
         { type: "facebook", id: 223 },
-        { type: "twitter", id: 55235 }
+        { type: "twitter", id: 55235 },
+        { type: "test", id: 0 },        
     ],
     address: {
         city: "", line: ""

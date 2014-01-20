@@ -73,7 +73,10 @@ linvodb.Model = function Model(name, schema, options)
         
         db.findOne({ _id: doc._id }, function(err, isIn)
         {
-            if (isIn) db.update({ _id: isIn._id }, _.omit(doc, "$$hashKey"), { }, hookEvent("updated", callback));
+            if (isIn) db.update(
+                { _id: isIn._id }, _.omit(doc, "$$hashKey"), { }, 
+                hookEvent("updated", callback)
+            );
             else db.insert(doc, hookEvent("updated", callback));
         });
     };
@@ -82,7 +85,7 @@ linvodb.Model = function Model(name, schema, options)
     model.prototype.toObject = function()
     {
         var obj = {};
-        _.each(this, function(val, key) { obj[key] = val })
+        _.each(this, function(val, key) { obj[key] = val });
         return obj;
     };
     model.prototype.copy = function() { return new model(this.toObject()) };
@@ -121,9 +124,19 @@ linvodb.Model = function Model(name, schema, options)
     };
 
     // Modification
-    model.remove = function(query, options, cb) { db.remove(query, options, hookEvent("updated", cb)) };
-    model.update = function(query, update, options, cb) { db.update(query, update, options, hookEvent("updated", cb)) };
-    model.insert = function(docs, cb) { db.insert(docs.map(toModelInstance).map(function(doc) { return doc.toObject() }), hookEvent("updated", cb)) };
+    model.remove = function(query, options, cb) {
+        db.remove(query, options, hookEvent("updated", cb))
+    };
+    model.update = function(query, update, options, cb) { 
+        db.update(query, update, options, hookEvent("updated", cb))
+    };
+    model.insert = function(docs, cb)
+    { 
+        db.insert(
+            docs.map(toModelInstance).map(function(doc) { return doc.toObject() }),
+            hookEvent("updated", cb)
+        ) 
+    };
 
     // Support event emitting
     _.extend(model, new EventEmitter());
