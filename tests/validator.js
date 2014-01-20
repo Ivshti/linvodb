@@ -20,7 +20,12 @@ var schema = {
     phone: "string",
     birth: "date",
     tags: ["string"],
-    linked_accounts: [{ type: "string", id: "number" }]
+    description: "string",
+    linked_accounts: [{ type: "string", id: "number" }],
+    address: {
+        city: "string",
+        line: "string"
+    }
 };
 
 // Desired result
@@ -30,10 +35,14 @@ var result = {
     phone: "+359889625851",
     birth: new Date("1994/12/10"),
     tags: ["business", "personal"],
+    description: "",
     linked_accounts: [
         { type: "facebook", id: 223 },
         { type: "twitter", id: 55235 }
-    ]
+    ],
+    address: {
+        city: "", line: ""
+    }
 };
 
 console.log(validate(obj, schema));
