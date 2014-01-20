@@ -145,9 +145,10 @@ linvodb.Model = function Model(name, schema, options)
     {
         model.prototype[name] = fn;
     };
-    //model.method
-    //model.static
-    
+    model.static = function(name, fn)
+    {
+        model[name] = fn;
+    };
 
     // Support event emitting
     _.extend(model, new EventEmitter());
