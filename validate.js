@@ -27,10 +27,26 @@ var screens = {
 
 function specType(spec) {
     if (typeof spec === 'object') {
-        if (Array.isArray(spec)) return 'array';
+        if (Array.isArray(spec)) return "array";
         if (spec === null) return "null";
         return 'object';
     } else return typeof spec;
+}
+
+function defaultValue(spec)
+{
+    var specT = specType(spec);
+    if (specT == "array") return [];
+    if (specT == "object") return { };
+    if (specT == "string") return ({
+        "string": "",
+        "number": 0,
+        "boolean": false,
+        "date": new Date(),
+        "regexp": new RegExp(),
+        "function": function() { },
+        "object": {}
+    })[spec];
 }
 
 var globalSpec = {
@@ -39,17 +55,18 @@ var globalSpec = {
     "_mtime": "date"
 };
 
-function screen(object, spec) {
+function validate(object, spec)
+{
     var result, prop, propResult;
 
     var specT = specType(spec);
     if (specT === 'array') {
         if (!Array.isArray(object)) return;
         return object
-            .map(function(x) { return screen(x, spec[0]) })
+            .map(function(x) { return validate(x, spec[0]) })
             .filter(function(x) { return x });
     } else if (specT === 'string') {
-        return screen(object, screens[spec]);
+        return validate(object, screens[spec]);
     } else if (specT === 'function') {
         return spec(object);
     }
@@ -63,34 +80,30 @@ function screen(object, spec) {
     } else if (specT === 'object') {
         result = object || {};
         // check for existance of properties in the global spec (which can whitelist fields in any object)
-        for (prop in object) {
+        for (prop in object)
+        {
             if (typeof globalSpec[prop] === 'undefined') continue;
-            propResult = screen(object[prop], globalSpec[prop]);
+            propResult = validate(object[prop], globalSpec[prop]);
 
             if (typeof propResult !== 'undefined') {
                 result[prop] = propResult;
             }
         }
 
-        for (prop in spec) {
-            if (typeof object[prop] === 'undefined') {
-                result[prop] = (specType(spec[prop]) === 'array') ? [] : null; // TODO: fill better
-            }
+        for (prop in spec)
+        {
+            if (typeof object[prop] === "undefined")
+                result[prop] = defaultValue(spec[prop]); // TODO: fill better
             
-            propResult = screen(object[prop], spec[prop]);
+            propResult = validate(object[prop], spec[prop]);
 
             // otherwise copy the result normally
-            if (typeof propResult !== 'undefined') {
-                result[prop] = propResult;
-            }
-            else result[prop] = null; // TODO: fill better
-
-            //    throw new Error("Screen failed for: " + prop);
-            
-            // or fill with null if requested
+            result[prop] = (typeof propResult !== 'undefined') ? propResult : defaultValue(spec[prop]);
+            //    throw new Error("Screen failed for: " + prop);            
         }
         
-        for (prop in object) {
+        for (prop in object)
+        {
             if (! (spec.hasOwnProperty(prop) || globalSpec.hasOwnProperty(prop)))
                 delete object[prop];
         }
@@ -99,18 +112,20 @@ function screen(object, spec) {
     }
 }
 
-screen.define = function(name, screenFunction) {
+validate.define = function(name, screenFunction)
+{
     screens[name] = screenFunction;
 };
 
-screen.or = function() {
+validate.or = function()
+{
     var screens = arguments;
     return function(value) {
         var i, res;
         var input = value,
             output;
         for (i = 0; i < screens.length; ++i) {
-            res = screen(input, screens[i]);
+            res = validate(input, screens[i]);
             if (typeof res !== 'undefined') {
                 input = res;
                 output = res;
@@ -120,17 +135,18 @@ screen.or = function() {
     };
 };
 
-screen.and = function() {
+validate.and = function()
+{
     var screens = arguments;
     return function(value) {
         var i;
         var res = value;
         for (i = 0; i < screens.length; ++i) {
-            res = screen(res, screens[i]);
+            res = validate(res, screens[i]);
             if (typeof res === 'undefined') return undefined;
         }
         return res;
     };
 };
 
-module.exports = screen;
+module.exports = validate;
