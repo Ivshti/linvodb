@@ -89,13 +89,9 @@ linvodb.Model = function Model(name, schema, options)
         return obj;
     };
     model.prototype.copy = function() { return new model(this.toObject()) };
-    
-    /* Static methods
+
+    /* Statics: standard DB operations
      */
-    //model.virtual
-    //model.static
-    //model.method
-    
     // Query
     model.find = function(query, cb) 
     {
@@ -135,8 +131,19 @@ linvodb.Model = function Model(name, schema, options)
         db.insert(
             docs.map(toModelInstance).map(function(doc) { return doc.toObject() }),
             hookEvent("updated", cb)
-        ) 
+        )
     };
+
+
+    /* Statics that extend the model
+     */
+    model.virtual = function(name, fn)
+    { 
+        Object.defineProperty(model.prototype, name, { get: fn });
+    };
+    //model.method
+    //model.static
+    
 
     // Support event emitting
     _.extend(model, new EventEmitter());
