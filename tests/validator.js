@@ -5,10 +5,10 @@ var obj = {
     firstName: "Ivo",
     lastName: "Georgiev",
     phone: "+359889625851",
-    birth: new Date("1994/12/10"),
+    birth: "1994/12/10", // tests typecasting
     tags: ["business", "personal",3,5], // adding two numbers to see if they would be filtered
     linked_accounts: [
-        { type: "facebook", id: 223 },
+        { type: "facebook", id: "223" }, // id tests typecasting
         { type: "twitter", id: 55235 },
         { type: "test" },
     ],
