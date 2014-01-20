@@ -33,6 +33,20 @@ function specType(spec) {
     } else return typeof spec;
 }
 
+function canCast(val, spec)
+{
+    if (spec == "string" && val.toString) return true;
+    if (spec == "number" && !isNaN(val)) return true;
+    if (spec == "date" && !isNaN(new Date(val).getTime())) return true;
+    return false;
+}
+function castToType(val, spec)
+{
+    if (spec == "string") return val.toString();
+    if (spec == "number") return parseFloat(val);
+    if (spec == "date") return new Date(val);
+}
+
 function defaultValue(spec)
 {
     var specT = specType(spec);
@@ -93,12 +107,17 @@ function validate(object, spec)
         for (prop in spec)
         {
             if (typeof object[prop] === "undefined")
-                result[prop] = defaultValue(spec[prop]); // TODO: fill better
+                result[prop] = defaultValue(spec[prop]);
             
             propResult = validate(object[prop], spec[prop]);
 
-            // otherwise copy the result normally
+            // Try a typecast - only for dates/strings
+            if (!propResult && canCast(object[prop], spec[prop])) 
+                propResult = castToType(object[prop], spec[prop]);
+
+            // Set the result value - or a default value if we don't have one
             result[prop] = (typeof propResult !== 'undefined') ? propResult : defaultValue(spec[prop]);
+            
             //    throw new Error("Screen failed for: " + prop);            
         }
         
