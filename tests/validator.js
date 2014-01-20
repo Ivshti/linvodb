@@ -8,8 +8,8 @@ var obj = {
     birth: new Date("1994/12/10"),
     tags: ["business", "personal",3,5], // adding two numbers to see if they would be filtered
     linked_accounts: [
-        { type: "facebook", id: "test" },
-        { type: "twitter", id: "test" }
+        { type: "facebook", id: 223 },
+        { type: "twitter", id: 55235 }
     ],
     addon: "some addon data"
 };
@@ -20,7 +20,7 @@ var schema = {
     phone: "string",
     birth: "date",
     tags: ["string"],
-    linked_accounts: [{ type: "string", id: "string" }]
+    linked_accounts: [{ type: "string", id: "number" }]
 };
 
 // Desired result
@@ -31,10 +31,10 @@ var result = {
     birth: new Date("1994/12/10"),
     tags: ["business", "personal"],
     linked_accounts: [
-        { type: "facebook", id: "test" },
-        { type: "twitter", id: "test" }
+        { type: "facebook", id: 223 },
+        { type: "twitter", id: 55235 }
     ]
 };
 
 console.log(validate(obj, schema));
-console.log(_.isEqual(result, validate(obj, schema)));
+console.log("is equal to expected result =>", _.isEqual(result, validate(obj, schema)));
