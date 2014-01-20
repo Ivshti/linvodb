@@ -66,37 +66,12 @@ function screen(object, spec) {
         return object;
     }
     // false means process to only use global white list - recursively
-    // TODO: rethink this feature!
-    else if (specT === 'boolean' && spec === false && specType(object) === 'object') {
-        for (prop in object) {
-
-            if (specType(object[prop]) === 'object') {
-                propResult = screen(object[prop], false);
-                if (typeof propResult !== 'undefined') {
-                    if (!result) result = {};
-                    result[prop] = propResult;
-                } else {
-                    result[prop] = null;
-                }
-            }
-            if (typeof globalSpec[prop] !== 'undefined') {
-                if (object[prop] !== 'undefined') {
-                    propResult = screen(object[prop], globalSpec[prop]);
-                    if (typeof propResult !== 'undefined') {
-                        if (!result) result = {};
-                        result[prop] = propResult;
-                    }
-                }
-            }
-        }
-        return result;
-    } else if (specT === 'regexp' && typeof object === 'string') {
+    else if (specT === 'regexp' && typeof object === 'string') {
         var reMatch = object.match(spec);
         if (reMatch && reMatch[0].length == object.length) return object;
     } else if (specT === 'object') {
         result = object || {};
         // check for existance of properties in the global spec (which can whitelist fields in any object)
-        if (typeof globalSpec === 'object') {
             for (prop in object) {
                 if (typeof globalSpec[prop] === 'undefined') continue;
                 propResult = screen(object[prop], globalSpec[prop]);
@@ -105,7 +80,6 @@ function screen(object, spec) {
                     result[prop] = propResult;
                 }
             }
-        }
 
         for (prop in spec) {
             if (typeof object[prop] === 'undefined') {
@@ -125,7 +99,7 @@ function screen(object, spec) {
             // or fill with null if requested
         }
         for (prop in object) {
-            if (! spec.hasOwnProperty(prop))
+            if (! (spec.hasOwnProperty(prop) || globalSpec.hasOwnProperty(prop)))
                 delete object[prop];
         }
         

@@ -3,7 +3,7 @@ var mkdirp = require("mkdirp");
 var path = require("path");
 var _ = require("underscore");
 var EventEmitter = require("events").EventEmitter;
-var screener = require("./validate");
+var validator = require("./validate");
 
 var linvodb = { };
 
@@ -35,14 +35,6 @@ linvodb.Model = function Model(name, schema, options)
         fullSchema[key] = { type: val };
     }); 
     
-    var baseDoc = screener({ }, schema);
-    // TODO: respect default values; that's what we need the baseDoc for
-
-    var screenDoc = {};
-    // TODO: generate screen document, general gist is: recursively replace OBJ with OBJ.type (if .type exists)
-    screenDoc = _.clone(schema);
-    _.extend(screenDoc, { _id: "string", _mtime: true, _ctime: true });
-
     /* Small helpers/utilities
      */
     var hookEvent = function(ev, fn) {
@@ -59,19 +51,15 @@ linvodb.Model = function Model(name, schema, options)
         if (doc && doc.constructor.name == "Document")
             return doc;
 
-        _.extend(this, baseDoc, doc || {});
+        _.extend(this, doc || {});
         this.validate();
     };
     var toModelInstance = function(x) { return new model(x) };
     
     /* Instance methods
      */
-    model.prototype.validate = function()
-    {
-        // See this http://mongoosejs.com/docs/2.7.x/docs/validation.html
-        // TODO
-        screener(this, screenDoc)
-    };
+    model.prototype.validate = function() { validator(this, schema) };
+    
     model.prototype.save = function(cb)
     {
         this.validate();
