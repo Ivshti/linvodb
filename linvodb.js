@@ -97,7 +97,7 @@ linvodb.Model = function Model(name, schema, options)
     {
         db.find(query, function(err, res)
         {
-            cb(err, res && res.map(toModelInstance));
+            cb && cb(err, res && res.map(toModelInstance));
         });
     };
     model.count = function(query, cb) { db.count(query, cb) };
@@ -140,6 +140,10 @@ linvodb.Model = function Model(name, schema, options)
     model.virtual = function(name, fn)
     { 
         Object.defineProperty(model.prototype, name, { get: fn });
+    };
+    model.method = function(name, fn)
+    {
+        model.prototype[name] = fn;
     };
     //model.method
     //model.static
