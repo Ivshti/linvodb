@@ -14,7 +14,8 @@ module.exports = function setupSync(model, collection, api)
     var q = async.queue(function(opts, cb)
     {
         if (! api.user) return cb();
-        
+        if (! dirty) return cb();
+
         var syncInfo = /*db.findOne("_sync", { collection: collection }) ||*/ { collection: model.modelName, lastSync: 0 },
             remoteMeta, localMeta, modifications, deletes,
             baseQuery = { collection: remoteCollection || model.modelName };
@@ -72,11 +73,17 @@ module.exports = function setupSync(model, collection, api)
             {
                 api.request("datastoreGet", _.extend({ }, baseQuery, { 
                     ids: modifications.filter(function(m) { return ! m[2] }).map(function(m) { return m[0] })
-                }), function(err, results) { collection.insert(results, callback) }); // TODO: some of those might be updates?
+                }), function(err, results)
+                {
+                    async.each(results, function(res, cb) {
+                        collection.update({ _id: res._id }, res, { upsert: true }, cb);
+                    }, callback);
+                });
             }],
             update_last_sync: ["push_remote", "push_local", function(callback)
             {
                 syncInfo.lastSync = Date.now();
+                console.log(syncInfo);
                 //db.save("_sync", syncInfo, callback)
             }]
         }, cb);
