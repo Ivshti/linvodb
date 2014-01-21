@@ -65,19 +65,16 @@ linvodb.Model = function Model(name, schema, options)
         this.validate();
         var doc = this.toObject(), // we need to copy this in order to avoid Document instances getting into NeDB
             self = this,
-            callback = function(err)
+            callback = hookEvent("updated", function(err)
             { 
                 _.extend(self, { _id: doc._id, _ctime: doc._ctime });
                 cb && cb(err, self);
-            };
-        
+            });
+
         db.findOne({ _id: doc._id }, function(err, isIn)
         {
-            if (isIn) db.update(
-                { _id: isIn._id }, _.omit(doc, "$$hashKey"), { }, 
-                hookEvent("updated", callback)
-            );
-            else db.insert(doc, hookEvent("updated", callback));
+            if (isIn) db.update({ _id: doc._id }, doc, {}, callback);
+            else db.insert(doc, callback);
         });
     };
     model.prototype.remove = function(cb) { db.remove({ _id: this._id }, hookEvent("updated", cb)) };
@@ -85,7 +82,11 @@ linvodb.Model = function Model(name, schema, options)
     model.prototype.toObject = function()
     {
         var obj = {};
-        _.each(this, function(val, key) { obj[key] = val });
+        _.each(this, function(val, key)
+        { 
+            if (! _.contains(["$$hashKey"], key)) // we can add other excludes
+                obj[key] = val;
+        });
         return obj;
     };
     model.prototype.copy = function() { return new model(this.toObject()) };
