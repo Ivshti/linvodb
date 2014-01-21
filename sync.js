@@ -1,21 +1,22 @@
 var async = require("async"),
+    fs = require("fs"),
     _ = require("underscore");
 
 module.exports = function setupSync(model, collection, api, remoteCollection)
 {
-    console.log("setting up sync"); //debug
-    var syncInfo = /*db.findOne("_sync", { collection: collection }) ||*/ { collection: model.modelName, lastSync: 0 };
-
+    var syncInfoPath = collection.filename+".sync";
+    var syncInfo = { lastSync: 0 };
+    if (fs.existsSync(syncInfoPath)) try { syncInfo = JSON.parse(fs.readFileSync(syncInfoPath)) } catch(e) { };
+    var saveSyncInfo = function() { fs.writeFileSync(syncInfoPath, JSON.stringify(syncInfo)) };
+    
     var dirty = false;
     var triggerSync = function(cb)
     { 
-        console.log("triggering sync"); //debug
         dirty = true;
         q.push({}, cb);
     };
-    model.on("updated", triggerSync);
+    model.on("updated", function(inf) { if (! (inf && inf.dontSync)) triggerSync() });
     model.static("triggerSync", triggerSync);
-    //TODO: trigger sync for the first time
 
     /* We need to run only one task at a time */
     var q = async.queue(function(opts, cb)
@@ -39,7 +40,7 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
             {
                 collection.find({}, function(err, results)
                 {
-                    localMeta = results.map(function(r) { return [r._id, r._mtime, 1] });
+                    localMeta = results.map(function(r) { return [r._id, r._mtime.getTime(), 1] });
                     callback(err);
                 });
             },
@@ -71,6 +72,11 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
                 collection.find({ _id: { $in: ids } }, function(err, updatedItems)
                 {
                     console.log("pushing "+updatedItems.length+" up, "+deletes.length+" deletes");//debug
+                    
+                    updatedItems = updatedItems.map(function(x) { 
+                        return _.extend(x, { _mtime: x._mtime.getTime(), _ctime: x._ctime.getTime() })
+                    });
+                    
                     api.request("datastorePut", _.extend({ }, baseQuery, { changes: 
                         deletes.map(function(id) { return { _id: id, _delete: true } })
                         .concat(updatedItems)
@@ -93,10 +99,13 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
             update_last_sync: ["push_remote", "push_local", function(callback)
             {
                 syncInfo.lastSync = Date.now();
-                console.log(syncInfo); // DEBUG
+                saveSyncInfo();
+                model.emit("updated", { dontSync: true }); // TODO: only if we have remote changes
                 callback();
-                //db.save("_sync", syncInfo, callback)
             }]
         }, cb);
     }, 1);
+    
+    /* Trigger first sync right after setup */
+    triggerSync();
 }
