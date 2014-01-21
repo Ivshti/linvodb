@@ -1,16 +1,21 @@
 var async = require("async"),
     _ = require("underscore");
 
-module.exports = function setupSync(model, collection, api)
+module.exports = function setupSync(model, collection, api, remoteCollection)
 {
+    console.log("setting up sync"); //debug
+    var syncInfo = /*db.findOne("_sync", { collection: collection }) ||*/ { collection: model.modelName, lastSync: 0 };
+
     var dirty = false;
     var triggerSync = function(cb)
     { 
+        console.log("triggering sync"); //debug
         dirty = true;
         q.push({}, cb);
     };
-    model.on("update", triggerSync);
+    model.on("updated", triggerSync);
     model.static("triggerSync", triggerSync);
+    //TODO: trigger sync for the first time
 
     /* We need to run only one task at a time */
     var q = async.queue(function(opts, cb)
@@ -18,8 +23,7 @@ module.exports = function setupSync(model, collection, api)
         if (! api.user) return cb();
         if (! dirty) return cb();
 
-        var syncInfo = /*db.findOne("_sync", { collection: collection }) ||*/ { collection: model.modelName, lastSync: 0 },
-            remoteMeta, localMeta, modifications, deletes,
+        var remoteMeta, localMeta, modifications, deletes,
             baseQuery = { collection: remoteCollection || model.modelName };
 
         async.auto({
@@ -44,6 +48,7 @@ module.exports = function setupSync(model, collection, api)
                 // It's correct to mark the DB before commiting the changes, but when compiling the list of changes
                 // Until the changes are commited, more changes might occur
                 dirty = false;
+                // TODO: set that back to true if anything fails
                 
                 modifications = [].concat(remoteMeta).concat(localMeta)
                 .filter(function(m) { return (m[1] || 0) >= syncInfo.lastSync })
@@ -65,6 +70,7 @@ module.exports = function setupSync(model, collection, api)
                 var ids = modifications.filter(function(m) { return m[2] }).map(function(m) { return m[0] });
                 collection.find({ _id: { $in: ids } }, function(err, updatedItems)
                 {
+                    console.log("pushing "+updatedItems.length+" up, "+deletes.length+" deletes");//debug
                     api.request("datastorePut", _.extend({ }, baseQuery, { changes: 
                         deletes.map(function(id) { return { _id: id, _delete: true } })
                         .concat(updatedItems)
@@ -77,6 +83,8 @@ module.exports = function setupSync(model, collection, api)
                     ids: modifications.filter(function(m) { return ! m[2] }).map(function(m) { return m[0] })
                 }), function(err, results)
                 {
+                    console.log("pulling "+results.length+" down");//debug
+                    // TODO: emit updated if we have changes originating from here
                     async.each(results, function(res, cb) {
                         collection.update({ _id: res._id }, res, { upsert: true }, cb);
                     }, callback);
@@ -85,7 +93,8 @@ module.exports = function setupSync(model, collection, api)
             update_last_sync: ["push_remote", "push_local", function(callback)
             {
                 syncInfo.lastSync = Date.now();
-                console.log(syncInfo);
+                console.log(syncInfo); // DEBUG
+                callback();
                 //db.save("_sync", syncInfo, callback)
             }]
         }, cb);

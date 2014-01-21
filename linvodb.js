@@ -167,7 +167,6 @@ linvodb.createService = function(module, model)
 {
     module.factory(model.modelName, ["$rootScope", function($rootScope) 
     {
-        model.on("update", function() { $rootScope.$apply() });
         model.on("liveQueryUpdate", function() { $rootScope.$apply() });
         return model;
     }]);
