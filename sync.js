@@ -4,11 +4,13 @@ var async = require("async"),
 module.exports = function setupSync(model, collection, api)
 {
     var dirty = false;
-    model.on("update", function()
+    var triggerSync = function(cb)
     { 
         dirty = true;
         q.push({}, cb);
-    }); // TODO: somehow export a method to force-trigger the sync; model.static('triggerSync') ?
+    };
+    model.on("update", triggerSync);
+    model.static("triggerSync", triggerSync);
 
     /* We need to run only one task at a time */
     var q = async.queue(function(opts, cb)

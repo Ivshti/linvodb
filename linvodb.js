@@ -4,6 +4,7 @@ var path = require("path");
 var _ = require("underscore");
 var EventEmitter = require("events").EventEmitter;
 var validator = require("./validate");
+var setupSync = require("./sync");
 
 var linvodb = { };
 
@@ -135,6 +136,8 @@ linvodb.Model = function Model(name, schema, options)
         )
     };
 
+    // Utils
+    model.setupSync = function(api) { setupSync(model, db, api) }; 
 
     /* Statics that extend the model
      */
