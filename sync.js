@@ -71,7 +71,7 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
                 var ids = modifications.filter(function(m) { return m[2] }).map(function(m) { return m[0] });
                 collection.find({ _id: { $in: ids } }, function(err, updatedItems)
                 {
-                    console.log("pushing "+updatedItems.length+" up, "+deletes.length+" deletes");//debug
+                    //console.log("pushing "+updatedItems.length+" up, "+deletes.length+" deletes");//debug
                     
                     updatedItems = updatedItems.map(function(x) { 
                         return _.extend(x, { _mtime: x._mtime.getTime(), _ctime: x._ctime.getTime() })
@@ -89,8 +89,7 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
                     ids: modifications.filter(function(m) { return ! m[2] }).map(function(m) { return m[0] })
                 }), function(err, results)
                 {
-                    console.log("pulling "+results.length+" down");//debug
-                    // TODO: emit updated if we have changes originating from here
+                    //console.log("pulling "+results.length+" down");//debug
                     async.each(results, function(res, cb) {
                         collection.update({ _id: res._id }, res, { upsert: true }, cb);
                     }, callback);
@@ -100,7 +99,10 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
             {
                 syncInfo.lastSync = Date.now();
                 saveSyncInfo();
-                model.emit("updated", { dontSync: true }); // TODO: only if we have remote changes
+                
+                if (modifications.some(function(m) { return ! m[2] }))
+                    model.emit("updated", { dontSync: true });
+
                 callback();
             }]
         }, cb);
