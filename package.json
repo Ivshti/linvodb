@@ -12,6 +12,7 @@
   "dependencies" : {
     "nedb":  "Ivshti/nedb",
     "mkdirp": ">=0.3.5",
-    "underscore": ">=1.4.4"
+    "underscore": ">=1.4.4",
+    "async": ">=0.2.9"
   }
 }
