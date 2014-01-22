@@ -112,15 +112,21 @@ linvodb.Model = function Model(name, schema, options)
     };
     model.count = function(query, cb) { db.count(query, cb) };
     
-    model.live = function(query)
+    model.live = function(query, options)
     {
+        options = options || {};
+        options.aggregate = options.aggregate || function(res, cb) { cb(res) };
+
         var handle = { res: [], err: null };
         var update = function()
         { 
             model.find(query, function(err, res)
-            { 
-                handle.err = err; handle.res = res; 
-                model.emit("liveQueryUpdate"); 
+            {
+                options.aggregate(res, function(res)
+                {
+                    handle.err = err; handle.res = res; 
+                    model.emit("liveQueryUpdate");                     
+                });
             });
         };
         update();
