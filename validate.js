@@ -72,7 +72,7 @@ var globalSpec = {
 /* We can pass an object as a spec which really describes a single type, and not a sub-object
  * e.g. { type: "string", index: true }
  * */
-var specAllowedKeys = ["type", "index", "unique"];
+var specAllowedKeys = ["type", "index", "unique", "sparse"];
 
 function validate(object, spec)
 {

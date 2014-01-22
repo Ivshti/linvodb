@@ -36,6 +36,9 @@ linvodb.Model = function Model(name, schema, options)
         fullSchema[key] = { type: val };
     }); 
     
+    /* Create indexes
+     */
+    
     /* Small helpers/utilities
      */
     var hookEvent = function(ev, fn) {
