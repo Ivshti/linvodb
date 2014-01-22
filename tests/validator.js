@@ -4,6 +4,7 @@ var validate = require("../validate");
 var obj = {
     firstName: "Ivo",
     lastName: "Georgiev",
+    email: "ivo@linvo.com",
     phone: "+359889625851",
     birth: "1994/12/10", // tests typecasting
     tags: ["business", "personal",3,5], // adding two numbers to see if they would be filtered
@@ -18,6 +19,7 @@ var obj = {
 var schema = {
     firstName: "string",
     lastName: "string",
+    email: { type: "string", index: true },
     phone: "string",
     birth: "date",
     tags: ["string"],
@@ -33,6 +35,7 @@ var schema = {
 var result = {
     firstName: "Ivo",
     lastName: "Georgiev",
+    email: "ivo@linvo.com",
     phone: "+359889625851",
     birth: new Date("1994/12/10"),
     tags: ["business", "personal"],

@@ -69,9 +69,18 @@ var globalSpec = {
     "_mtime": "date"
 };
 
+/* We can pass an object as a spec which really describes a single type, and not a sub-object
+ * e.g. { type: "string", index: true }
+ * */
+var specAllowedKeys = ["type", "index", "unique"];
+
 function validate(object, spec)
 {
     var result, prop, propResult;
+
+    if (typeof(spec) == "object" 
+        && _.keys(spec).every(function(x) { return _.contains(specAllowedKeys, x) })
+       ) spec = spec.type;
 
     var specT = specType(spec);
     if (specT === 'array') {
