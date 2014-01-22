@@ -138,6 +138,7 @@ linvodb.Model = function Model(name, schema, options)
 
     // Utils
     model.setupSync = function(api) { setupSync(model, db, api) }; 
+    model.ensureIndex = function(options, cb) { db.ensureIndex(options, cb) };
 
     /* Statics that extend the model
      */
