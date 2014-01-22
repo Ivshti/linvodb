@@ -27,17 +27,22 @@ linvodb.Model = function Model(name, schema, options)
     
     var db = new nedb({ filename: path.join(linvodb.dbPath, name), autoload: true });
 
-    /* Inflate the schema object / create the base document
-     */
-    var fullSchema = {};
-    _.each(schema, function(val, key)
-    {
-        if (typeof(val) == "object" && val.type) fullSchema[key] = val;
-        fullSchema[key] = { type: val };
-    }); 
-    
     /* Create indexes
      */
+    function getIndexes(obj, prefix)
+    {
+        var indexes = [], prefix = prefix || "";
+        _.each(obj, function(val, key)
+        {
+            if (typeof(val) != "object") return;
+            if (! validator.isSpecialSpec(val)) // recursively find if we have indexes below
+                return indexes = indexes.concat(getIndexes(val, prefix+key+"."));
+            if (val.index)  // now we know spec is a special object: add the index
+                indexes.push({ fieldName: prefix+key, sparse: val.sparse, unique: val.unique });
+        });
+        return indexes;
+    };
+    getIndexes(schema).forEach(function(index) { db.ensureIndex(index) });
     
     /* Small helpers/utilities
      */

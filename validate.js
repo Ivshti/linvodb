@@ -78,9 +78,7 @@ function validate(object, spec)
 {
     var result, prop, propResult;
 
-    if (typeof(spec) == "object" 
-        && _.keys(spec).every(function(x) { return _.contains(specAllowedKeys, x) })
-       ) spec = spec.type;
+    if (validate.isSpecialSpec(spec)) spec = spec.type;
 
     var specT = specType(spec);
     if (specT === 'array') {
@@ -139,6 +137,13 @@ function validate(object, spec)
         return result;
     }
 }
+
+// we need this exported to use in linvodb.js
+validate.isSpecialSpec = function(spec)
+{
+    return typeof(spec) == "object" 
+        && _.keys(spec).every(function(x) { return _.contains(specAllowedKeys, x) });
+};
 
 validate.define = function(name, screenFunction)
 {
