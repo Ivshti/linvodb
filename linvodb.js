@@ -23,7 +23,7 @@ linvodb.Model = function Model(name, schema, options)
     if (! linvodb.dbPath) throw new Error("must initialize the DB first - .init(dbPath)");
     if (typeof(name) != "string") throw new Error("model name must be a string");
     if (typeof(schema) != "object") throw new Error("model schema must be an object");
-    options = options || {};
+    var options = options || {};
     
     var db = new nedb({ filename: path.join(linvodb.dbPath, name), autoload: true });
 
@@ -127,7 +127,7 @@ linvodb.Model = function Model(name, schema, options)
     
     model.live = function(query, options)
     {
-        options = options || {};
+        var options = options || {};
         options.aggregate = options.aggregate || function(res, cb) { cb(res) };
 
         var handle = { res: [], err: null };

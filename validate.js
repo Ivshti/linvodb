@@ -82,7 +82,7 @@ var specAllowedKeys = ["type", "index", "unique", "sparse"];
 function validate(object, spec, options)
 {
     var result, prop, propResult;
-    options = _.extend(defaultOptions, options || {});
+    var options = _.extend({}, defaultOptions, options || {});
 
     if (validate.isSpecialSpec(spec)) spec = spec.type;
 
