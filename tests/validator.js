@@ -14,7 +14,8 @@ var obj = {
         { type: "test" },
     ],
     addon: "some addon data",
-    more_addon: "more addondata"
+    more_addon: "more addondata",
+    test: [0,0,0,0]
 };
 
 var schema = {
@@ -29,7 +30,8 @@ var schema = {
     address: {
         city: "string",
         line: "string"
-    }
+    },
+    test: ["number"]
 };
 
 // Desired result
@@ -48,7 +50,8 @@ var desiredResult = {
     ],
     address: {
         city: "", line: ""
-    }
+    },
+    test: [0,0,0,0]
 };
 
 var result = validate(obj, schema);

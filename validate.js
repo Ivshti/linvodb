@@ -91,7 +91,7 @@ function validate(object, spec, options)
         if (!Array.isArray(object)) return;
         return object
             .map(function(x) { return validate(x, spec[0], options) })
-            .filter(function(x) { return x });
+            .filter(function(x) { return typeof(x) !== 'undefined' });
     } else if (specT === 'string') {
         return validate(object, screens[spec], options);
     } else if (specT === 'function') {
