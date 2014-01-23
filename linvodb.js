@@ -77,7 +77,7 @@ linvodb.Model = function Model(name, schema, options)
 
     /* Instance methods
      */
-    model.prototype.validate = function() { validator(this, schema) };
+    model.prototype.validate = function() { validator(this, schema, options) };
     
     model.prototype.save = function(cb)
     {

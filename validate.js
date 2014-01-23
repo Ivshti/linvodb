@@ -70,14 +70,19 @@ var globalSpec = {
     "_ttl": "number"
 };
 
+var defaultOptions = {
+    strict: true
+};
+
 /* We can pass an object as a spec which really describes a single type, and not a sub-object
  * e.g. { type: "string", index: true }
  * */
 var specAllowedKeys = ["type", "index", "unique", "sparse"];
 
-function validate(object, spec)
+function validate(object, spec, options)
 {
     var result, prop, propResult;
+    options = _.extend(defaultOptions, options || {});
 
     if (validate.isSpecialSpec(spec)) spec = spec.type;
 
@@ -85,10 +90,10 @@ function validate(object, spec)
     if (specT === 'array') {
         if (!Array.isArray(object)) return;
         return object
-            .map(function(x) { return validate(x, spec[0]) })
+            .map(function(x) { return validate(x, spec[0], options) })
             .filter(function(x) { return x });
     } else if (specT === 'string') {
-        return validate(object, screens[spec]);
+        return validate(object, screens[spec], options);
     } else if (specT === 'function') {
         return spec(object);
     }
@@ -105,7 +110,7 @@ function validate(object, spec)
         for (prop in object)
         {
             if (typeof globalSpec[prop] === 'undefined') continue;
-            propResult = validate(object[prop], globalSpec[prop]);
+            propResult = validate(object[prop], globalSpec[prop], options);
 
             if (typeof propResult !== 'undefined') {
                 result[prop] = propResult;
@@ -117,7 +122,7 @@ function validate(object, spec)
             if (typeof object[prop] === "undefined")
                 result[prop] = defaultValue(spec[prop]);
             
-            propResult = validate(object[prop], spec[prop]);
+            propResult = validate(object[prop], spec[prop], options);
 
             // Try a typecast - only for dates/strings
             if (!propResult && canCast(object[prop], spec[prop])) 
@@ -129,7 +134,7 @@ function validate(object, spec)
             //    throw new Error("Screen failed for: " + prop);            
         }
         
-        for (prop in object)
+        if (options.strict) for (prop in object)
         {
             if (! (spec.hasOwnProperty(prop) || globalSpec.hasOwnProperty(prop)))
                 delete object[prop];

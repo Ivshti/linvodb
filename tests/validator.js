@@ -13,7 +13,8 @@ var obj = {
         { type: "twitter", id: 55235 },
         { type: "test" },
     ],
-    addon: "some addon data"
+    addon: "some addon data",
+    more_addon: "more addondata"
 };
 
 var schema = {
@@ -32,7 +33,7 @@ var schema = {
 };
 
 // Desired result
-var result = {
+var desiredResult = {
     firstName: "Ivo",
     lastName: "Georgiev",
     email: "ivo@linvo.com",
@@ -50,5 +51,6 @@ var result = {
     }
 };
 
-console.log(validate(obj, schema));
-console.log("is equal to expected result =>", _.isEqual(result, validate(obj, schema)));
+var result = validate(obj, schema);
+console.log(result);
+console.log("is equal to expected result =>", _.isEqual(desiredResult, result));
