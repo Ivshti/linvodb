@@ -64,7 +64,17 @@ linvodb.Model = function Model(name, schema, options)
         this.validate();
     };
     var toModelInstance = function(x) { return new model(x) };
-    
+    var removeExpired = function(doc)
+    { 
+        // Remove expired documents
+        if (doc._ttl && doc._ctime.getTime()+doc._ttl < Date.now())
+        {
+            db.remove({ _id: doc._id });
+            return false;
+        }
+        return true;
+    };
+
     /* Instance methods
      */
     model.prototype.validate = function() { validator(this, schema) };
@@ -75,7 +85,10 @@ linvodb.Model = function Model(name, schema, options)
         var doc = this.toObject(), // we need to copy this in order to avoid Document instances getting into NeDB
             self = this,
             callback = hookEvent("updated", function(err)
-            { 
+            {
+                if (!self._id && doc._id && doc._ttl)
+                    setTimeout(function() { model.emit("updated") }, doc._ttl); // Hack: if the document is short-lived, it would be good to do this
+                
                 _.extend(self, { _id: doc._id, _ctime: doc._ctime });
                 cb && cb(err, self);
             });
@@ -107,7 +120,7 @@ linvodb.Model = function Model(name, schema, options)
     {
         db.find(query, function(err, res)
         {
-            cb && cb(err, res && res.map(toModelInstance));
+            cb && cb(err, res && res.map(toModelInstance).filter(removeExpired));
         });
     };
     model.count = function(query, cb) { db.count(query, cb) };

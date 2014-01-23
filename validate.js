@@ -66,7 +66,8 @@ function defaultValue(spec)
 var globalSpec = {
     "_id": "string", // TODO: regexp
     "_ctime": "date",
-    "_mtime": "date"
+    "_mtime": "date",
+    "_ttl": "number"
 };
 
 /* We can pass an object as a spec which really describes a single type, and not a sub-object
