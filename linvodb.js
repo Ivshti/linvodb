@@ -132,18 +132,22 @@ linvodb.Model = function Model(name, schema, options)
 
         var handle = { res: [], err: null };
         var update = function()
-        { 
+        {
+            // TODO: maybe check if the result is actually different before calling liveQueryUpdate?
+            // instead of full-on comparison we can just do _mtime arrays
             model.find(query, function(err, res)
             {
                 options.aggregate(res, function(res)
                 {
                     handle.err = err; handle.res = res; 
-                    model.emit("liveQueryUpdate");                     
+                    model.emit("liveQueryUpdate");               
                 });
             });
         };
         update();
         model.on("updated", update);
+        // OR we can figure out if there are going to be modifications before actually re-quering
+        // this is far more difficult so there's kind of no point
         
         return handle;
     };
