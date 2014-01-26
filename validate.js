@@ -112,9 +112,11 @@ function validate(object, spec, options)
             if (typeof globalSpec[prop] === 'undefined') continue;
             propResult = validate(object[prop], globalSpec[prop], options);
 
-            if (typeof propResult !== 'undefined') {
-                result[prop] = propResult;
-            }
+            // Try a typecast - only for dates/strings
+            if (!propResult && canCast(object[prop], spec[prop])) 
+                propResult = castToType(object[prop], spec[prop]);
+
+            if (typeof propResult !== 'undefined') result[prop] = propResult;
         }
 
         for (prop in spec)
