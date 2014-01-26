@@ -47,8 +47,10 @@ function castToType(val, spec)
     if (spec == "date") return new Date(val);
 }
 
-function defaultValue(spec)
+function defaultValue(spec, specialSpec)
 {
+    if (validate.isSpecialSpec(spec) && spec.hasOwnProperty("default")) return spec.default;
+    
     var specT = specType(spec);
     if (specT == "array") return [];
     if (specT == "object") return { };
@@ -77,7 +79,7 @@ var defaultOptions = {
 /* We can pass an object as a spec which really describes a single type, and not a sub-object
  * e.g. { type: "string", index: true }
  * */
-var specAllowedKeys = ["type", "index", "unique", "sparse"];
+var specAllowedKeys = ["type", "index", "unique", "sparse", "default"];
 
 function validate(object, spec, options)
 {
@@ -110,25 +112,23 @@ function validate(object, spec, options)
         for (prop in object)
         {
             if (typeof globalSpec[prop] === 'undefined') continue;
-            propResult = validate(object[prop], globalSpec[prop], options);
+            propResult = validate(result[prop], globalSpec[prop], options);
 
             // Try a typecast - only for dates/strings
-            if (!propResult && canCast(object[prop], spec[prop])) 
-                propResult = castToType(object[prop], spec[prop]);
+            if (!propResult && canCast(result[prop], spec[prop])) 
+                propResult = castToType(result[prop], spec[prop]);
 
             if (typeof propResult !== 'undefined') result[prop] = propResult;
         }
 
         for (prop in spec)
         {
-            if (typeof object[prop] === "undefined")
-                result[prop] = defaultValue(spec[prop]);
-            
-            propResult = validate(object[prop], spec[prop], options);
+            if (typeof result[prop] === "undefined") result[prop] = defaultValue(spec[prop]);
+            propResult = validate(result[prop], spec[prop], options);
 
             // Try a typecast - only for dates/strings
-            if (!propResult && canCast(object[prop], spec[prop])) 
-                propResult = castToType(object[prop], spec[prop]);
+            if (!propResult && canCast(result[prop], spec[prop])) 
+                propResult = castToType(result[prop], spec[prop]);
 
             // Set the result value - or a default value if we don't have one
             result[prop] = (typeof propResult !== 'undefined') ? propResult : defaultValue(spec[prop]);
