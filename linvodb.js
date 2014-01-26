@@ -87,13 +87,14 @@ linvodb.Model = function Model(name, schema, options)
 
         db.update({ _id: doc._id }, doc, { upsert: true }, hookEvent("updated", function(err, count, newDoc)
         {
-            if (err) return cb(err);
+            if (err) return cb && cb(err);
             if (newDoc) doc = newDoc; // a new document was inserted
 
             if (!self._id && doc._id && doc._ttl)
                 setTimeout(function() { model.emit("updated") }, doc._ttl); // Hack: if the document is short-lived, it would be good to do this
             
             _.extend(self, _.pick(doc, "_id", "_ctime", "_mtime"));
+            cb && cb(null, self);
         }));
     };
     model.prototype.remove = function(cb) { db.remove({ _id: this._id }, hookEvent("updated", cb)) };
