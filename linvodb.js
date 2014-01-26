@@ -98,7 +98,7 @@ linvodb.Model = function Model(name, schema, options)
     };
     model.prototype.remove = function(cb) { db.remove({ _id: this._id }, hookEvent("updated", cb)) };
     
-    model.prototype.toObject = function()
+    model.prototype.toObject = function(validate)
     {
         var obj = {};
         _.each(this, function(val, key)
@@ -106,6 +106,8 @@ linvodb.Model = function Model(name, schema, options)
             if (! _.contains(["$$hashKey", "length"], key)) // we can add other excludes; length messes up NeDB big time; TODO: console.log a warning there
                 obj[key] = val;
         });
+        
+        if (validate) validator(obj, schema, options);
         return obj;
     };
     model.prototype.copy = function() { return new model(this.toObject()) };
