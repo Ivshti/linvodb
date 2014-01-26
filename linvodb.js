@@ -110,31 +110,11 @@ linvodb.Model = function Model(name, schema, options)
     };
     model.prototype.copy = function() { return new model(this.toObject()) };
 
-    /* Statics: standard DB operations
+    /* 
+     * Statics: standard DB operations
      */
-    // Query
-    model.find = function(query, cb) 
-    {
-        var cur = db.find(query),
-            exec = _.bind(cur.exec, cur);
-        cur.exec = function(cb)
-        {
-            exec(function(err, res)
-            {
-                cb && cb(err, res && res.map(toModelInstance).filter(removeExpired));
-            });
-        };
-        
-        if (cb) cur.exec(cb);
-        return cur;
-    };
-    model.findOne = function(query, cb)
-    {
-        model.find(query).limit(1).exec(function(err, res) { cb(err, res && res[0]) })
-    };
-    model.count = function(query, cb) { db.count(query, cb) };
-    
-    model.live = function(query, options)
+    // Live query system - basic for now
+    var liveQuery = function(cur, options)
     {
         var options = options || {};
         options.aggregate = options.aggregate || function(res, cb) { cb(res) };
@@ -144,7 +124,7 @@ linvodb.Model = function Model(name, schema, options)
         {
             // TODO: maybe check if the result is actually different before calling liveQueryUpdate?
             // instead of full-on comparison we can just do _mtime arrays
-            model.find(query, function(err, res)
+            cur.exec(function(err, res)
             {
                 options.aggregate(res, function(res)
                 {
@@ -160,7 +140,32 @@ linvodb.Model = function Model(name, schema, options)
         
         return handle;
     };
-
+     
+    // Query
+    model.find = function(query, cb) 
+    {
+        var cur = db.find(query || { }),
+            exec = _.bind(cur.exec, cur);
+        
+        cur.exec = function(cb)
+        {
+            exec(function(err, res)
+            {
+                cb && cb(err, res && res.map(toModelInstance).filter(removeExpired));
+            });
+        };
+        cur.live = function(options) { return liveQuery(cur, options) };
+        
+        if (cb) cur.exec(cb);
+        return cur;
+    };
+    model.findOne = function(query, cb)
+    {
+        model.find(query).limit(1).exec(function(err, res) { cb(err, res && res[0]) })
+    };
+    model.count = function(query, cb) { db.count(query, cb) };
+    model.live = function(query, options) { return model.find(query).live(options) };
+    
     // Modification
     model.remove = function(query, options) {
         var cb = (typeof(arguments[arguments.length-1]) == "function") && arguments[arguments.length-1];
