@@ -128,6 +128,10 @@ linvodb.Model = function Model(name, schema, options)
         if (cb) cur.exec(cb);
         return cur;
     };
+    model.findOne = function(query, cb)
+    {
+        model.find(query).limit(1).exec(function(err, res) { cb(err, res && res[0]) })
+    };
     model.count = function(query, cb) { db.count(query, cb) };
     
     model.live = function(query, options)
