@@ -167,12 +167,14 @@ linvodb.Model = function Model(name, schema, options)
     model.live = function(query, options) { return model.find(query).live(options) };
     
     // Modification
-    model.remove = function(query, options) {
+    model.remove = function(query, options)
+    {
         var cb = (typeof(arguments[arguments.length-1]) == "function") && arguments[arguments.length-1];
             options = (options && typeof(options)=="object") ? options : {};
         db.remove(query, options, hookEvent("updated", cb))
     };
-    model.update = function(query, update, options, cb) { 
+    model.update = function(query, update, options, cb)
+    { 
         db.update(query, update, options, hookEvent("updated", cb))
     };
     model.insert = function(docs, cb)
