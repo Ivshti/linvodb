@@ -88,7 +88,7 @@ linvodb.Model = function Model(name, schema, options)
         db.update({ _id: doc._id }, doc, { upsert: true }, hookEvent("updated", function(err, count, newDoc)
         {
             if (err) return cb(err);
-            if (newDoc) doc = newDoc;
+            if (newDoc) doc = newDoc; // a new document was inserted
 
             if (!self._id && doc._id && doc._ttl)
                 setTimeout(function() { model.emit("updated") }, doc._ttl); // Hack: if the document is short-lived, it would be good to do this
@@ -115,10 +115,18 @@ linvodb.Model = function Model(name, schema, options)
     // Query
     model.find = function(query, cb) 
     {
-        db.find(query, function(err, res)
+        var cur = db.find(query),
+            exec = _.bind(cur.exec, cur);
+        cur.exec = function(cb)
         {
-            cb && cb(err, res && res.map(toModelInstance).filter(removeExpired));
-        });
+            exec(function(err, res)
+            {
+                cb && cb(err, res && res.map(toModelInstance).filter(removeExpired));
+            });
+        };
+        
+        if (cb) cur.exec(cb);
+        return cur;
     };
     model.count = function(query, cb) { db.count(query, cb) };
     
