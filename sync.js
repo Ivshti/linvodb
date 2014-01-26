@@ -74,7 +74,7 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
                     //console.log("pushing "+updatedItems.length+" up, "+deletes.length+" deletes");//debug
                     
                     updatedItems = updatedItems.map(function(x) { 
-                        return _.extend(x, { _mtime: x._mtime.getTime(), _ctime: x._ctime.getTime() })
+                        return _.extend({ }, x, { _mtime: x._mtime.getTime(), _ctime: x._ctime.getTime() })
                     });
                     
                     api.request("datastorePut", _.extend({ }, baseQuery, { changes: 
