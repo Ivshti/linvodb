@@ -35,7 +35,7 @@ function specType(spec) {
 
 function canCast(val, spec)
 {
-    if (spec == "string" && val.toString) return true;
+    if (spec == "string" && val && val.toString) return true;
     if (spec == "number" && !isNaN(val)) return true;
     if (spec == "date" && !isNaN(new Date(val).getTime())) return true;
     return false;

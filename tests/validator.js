@@ -18,6 +18,7 @@ var obj = {
     test: [0,0,0,0]
 };
 
+// TODO: test regexp and function-based validation
 var schema = {
     firstName: "string",
     lastName: "string",
