@@ -80,7 +80,11 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
                     api.request("datastorePut", _.extend({ }, baseQuery, { changes: 
                         deletes.map(function(id) { return { _id: id, _delete: true } })
                         .concat(updatedItems)
-                    }), callback);
+                    }), function(err)
+                    {
+                        if (err) console.error(err);
+                        callback();
+                    });
                 });
             }],
             push_local: ["compile_changes", function(callback)
@@ -94,7 +98,11 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
                         res._ctime = new Date(res._ctime);
                         res._force_mtime = new Date(res._mtime);
                         collection.update({ _id: res._id }, res, { upsert: true }, cb);
-                    }, callback);
+                    }, function(err)
+                    {
+                        if (err) console.error(err);
+                        callback();
+                    });
                 });
             }],
             update_last_sync: ["push_remote", "push_local", function(callback)
