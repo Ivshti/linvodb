@@ -104,7 +104,9 @@ linvodb.Model = function Model(name, schema, options)
         var obj = {};
         _.each(this, function(val, key)
         { 
-            if (! _.contains(["$$hashKey", "length"], key)) // we can add other excludes; length messes up NeDB big time; TODO: console.log a warning there
+            // we can add other excludes; length messes up NeDB big time; TODO: console.log a warning there
+            // I can't explain to myself why length messes up NeDB, it has to be figured out
+            if (! _.contains(["$$hashKey", "length"], key))
                 obj[key] = val;
         });
         

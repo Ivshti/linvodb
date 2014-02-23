@@ -91,8 +91,8 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
                 {
                     //console.log("pulling "+results.length+" down");//debug
                     async.each(results, function(res, cb) {
-                        res._ctime = new Date(res._ctime);
-                        res._mtime = new Date(res._mtime);
+                        //res._ctime = new Date(res._ctime);
+                        res._force_mtime = new Date(res._mtime);
                         collection.update({ _id: res._id }, res, { upsert: true }, cb);
                     }, callback);
                 });
