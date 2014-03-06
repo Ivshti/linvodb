@@ -1,6 +1,8 @@
 var nedb = require("nedb");
 var mkdirp = require("mkdirp");
 var path = require("path");
+var async = require("async");
+var mpath = require("mpath");
 var _ = require("underscore");
 var EventEmitter = require("events").EventEmitter;
 var validator = require("./validate");
@@ -157,10 +159,26 @@ linvodb.Model = function Model(name, schema, options)
         {
             exec(function(err, res)
             {
-                console.log(toPopulate);
                 var result = res && res.map(toModelInstance).filter(removeExpired);
                 
-                cb && cb(err, result);
+                /* 
+                 * TODO: implement a hooks system and then use that to populate
+                 */
+                 
+                async.each(toPopulate, function(path, callback)
+                {
+                    var schm = mpath.get(path, schema);
+                    if (Array.isArray(schm)) schm = schm[0];
+                    
+                    if (! schm.ref) return callback();
+                    if (! linvodb.models[schm.ref]) return callback();
+
+                    /* TODO: populate */
+                    callback();
+                }, function()
+                {
+                    cb && cb(err, result);
+                });                
             });
         };
         cur.live = function(options) { return liveQuery(cur, options) };
