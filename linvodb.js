@@ -157,6 +157,7 @@ linvodb.Model = function Model(name, schema, options)
         {
             exec(function(err, res)
             {
+                console.log(toPopulate);
                 var result = res && res.map(toModelInstance).filter(removeExpired);
                 
                 cb && cb(err, result);

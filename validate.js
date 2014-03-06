@@ -1,7 +1,9 @@
 var _ = require("underscore");
 
 var screens = {
-    ObjectId: /[0-9a-fA-F]{24}/,
+    'id': function(value) {
+        if (typeof value === 'string') return value;
+    },
     'string': function(value) {
         if (typeof value === 'string') return value;
     },
@@ -56,6 +58,7 @@ function defaultValue(spec, specialSpec)
     if (specT == "object") return { };
     if (specT == "string") return ({
         "string": "",
+        "id": null,
         "number": 0,
         "boolean": false,
         "date": new Date(),
@@ -79,7 +82,7 @@ var defaultOptions = {
 /* We can pass an object as a spec which really describes a single type, and not a sub-object
  * e.g. { type: "string", index: true }
  * */
-var specAllowedKeys = ["type", "index", "unique", "sparse", "default"];
+var specAllowedKeys = ["type", "index", "unique", "sparse", "default", "ref"];
 
 function validate(object, spec, options)
 {
