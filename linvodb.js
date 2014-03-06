@@ -165,14 +165,22 @@ linvodb.Model = function Model(name, schema, options)
                  * TODO: implement a hooks system and then use that to populate
                  */
                  
-                async.each(toPopulate, function(path, callback)
+                if (result) async.each(toPopulate, function(path, callback)
                 {
                     var schm = mpath.get(path, schema);
                     if (Array.isArray(schm)) schm = schm[0];
                     
                     if (! schm.ref) return callback();
                     if (! linvodb.models[schm.ref]) return callback();
-
+                    
+                    var ids = _.flatten(result.map(function(x) { return mpath.get(path, x) }))
+                        .filter(function(x) { return x });
+                    
+                    linvodb.models[schm.ref].find({ _id: { $in: ids } }, function(err, docs)
+                    {
+                        console.log(JSON.stringify(docs));
+                    });
+                    
                     /* TODO: populate */
                     callback();
                 }, function()

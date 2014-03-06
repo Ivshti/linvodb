@@ -52,6 +52,7 @@ function castToType(val, spec)
 function defaultValue(spec, specialSpec)
 {
     if (validate.isSpecialSpec(spec) && spec.hasOwnProperty("default")) return spec.default;
+    if (validate.isSpecialSpec(spec)) spec = spec.type;
     
     var specT = specType(spec);
     if (specT == "array") return [];
@@ -88,7 +89,7 @@ function validate(object, spec, options)
 {
     var result, prop, propResult;
     var options = _.extend({}, defaultOptions, options || {});
-
+    
     if (validate.isSpecialSpec(spec)) spec = spec.type;
 
     var specT = specType(spec);
