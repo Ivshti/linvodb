@@ -162,9 +162,10 @@ linvodb.Model = function Model(name, schema, options)
                 var result = res && res.map(toModelInstance).filter(removeExpired);
                 
                 /* 
+                 * 
                  * TODO: implement a hooks system and then use that to populate
+                 * 
                  */
-                 
                 if (result) async.each(toPopulate, function(path, callback)
                 {
                     var schm = mpath.get(path, schema);
@@ -178,11 +179,21 @@ linvodb.Model = function Model(name, schema, options)
                     
                     linvodb.models[schm.ref].find({ _id: { $in: ids } }, function(err, docs)
                     {
-                        console.log(JSON.stringify(docs));
+                        if (err) return callback();
+                        
+                        var indexed = _.indexBy(docs, "_id");
+                        
+                        result.forEach(function(res)
+                        {
+                            var val = mpath.get(path, res);
+                            if (Array.isArray(val))
+                                mpath.set(path, val.map(function(id) { return indexed[id] }), res);
+                            else
+                                mpath.set(path, indexed[val], res);
+                        });
+
+                        callback();
                     });
-                    
-                    /* TODO: populate */
-                    callback();
                 }, function()
                 {
                     cb && cb(err, result);
