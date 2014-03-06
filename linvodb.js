@@ -150,16 +150,20 @@ linvodb.Model = function Model(name, schema, options)
     model.find = function(query, cb) 
     {
         var cur = db.find(query || { }),
-            exec = _.bind(cur.exec, cur);
-        
+            exec = _.bind(cur.exec, cur),
+            toPopulate = [];
+            
         cur.exec = function(cb)
         {
             exec(function(err, res)
             {
-                cb && cb(err, res && res.map(toModelInstance).filter(removeExpired));
+                var result = res && res.map(toModelInstance).filter(removeExpired);
+                
+                cb && cb(err, result);
             });
         };
         cur.live = function(options) { return liveQuery(cur, options) };
+        cur.populate = function(path) { toPopulate.push(path); return cur; }
         
         if (cb) cur.exec(cb);
         return cur;
