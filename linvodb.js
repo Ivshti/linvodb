@@ -159,14 +159,17 @@ linvodb.Model = function Model(name, schema, options)
         {
             exec(function(err, res)
             {
-                var result = res && res.map(toModelInstance).filter(removeExpired);
+                if (err || !res)
+                    return cb(err);
+                
+                var result = res.map(toModelInstance).filter(removeExpired);
                 
                 /* 
                  * 
                  * TODO: implement a hooks system and then use that to populate
                  * 
                  */
-                if (result) async.each(toPopulate, function(path, callback)
+                async.each(toPopulate, function(path, callback)
                 {
                     var schm = mpath.get(path, schema);
                     if (Array.isArray(schm)) schm = schm[0];
