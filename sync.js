@@ -52,7 +52,7 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
                 // TODO: set that back to true if anything fails
                 
                 modifications = [].concat(remoteMeta).concat(localMeta)
-                .filter(function(m) { return (m[1] || 0) >= syncInfo.lastSync })
+                .filter(function(m) { return (m[1] || 0) >= (syncInfo.lastSync||0) })
                 .sort(function(a, b) { return a[1] - b[1] });
                 /* TODO: solve conflicts
                  */
