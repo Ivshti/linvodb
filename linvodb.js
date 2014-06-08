@@ -19,6 +19,7 @@ linvodb.init = function(dataPath)
 
 /* The model constructor - this creates a model
  */
+linvodb.stores = {};
 linvodb.models = {}; // An easy way to access all models
 linvodb.Model = function Model(name, schema, options)
 {
@@ -27,7 +28,9 @@ linvodb.Model = function Model(name, schema, options)
     if (typeof(schema) != "object") throw new Error("model schema must be an object");
     var options = options || {};
     
-    var db = new nedb({ filename: path.join(linvodb.dbPath, name), autoload: true });
+    var storeName = options.collection || name;
+    var db = linvodb.stores[storeName] = linvodb.stores[storeName] 
+		|| new nedb({ filename: path.join(linvodb.dbPath, storeName), autoload: true });
 
     /* Create indexes
      */
