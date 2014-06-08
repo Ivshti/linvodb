@@ -64,6 +64,7 @@ linvodb.Model = function Model(name, schema, options)
 
         _.extend(this, doc || {});
         this.validate();
+        if (this.construct) this.construct();
     };
     var toModelInstance = function(x) { return new model(x) };
     var removeExpired = function(doc)
