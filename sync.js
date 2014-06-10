@@ -24,7 +24,7 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
         if (! api.user) return cb();
         if (! dirty) return cb();
 
-        var remoteMeta, localMeta, modifications, deletes,
+        var remoteMeta, localMeta, modifications, deletes = [],
             baseQuery = { collection: remoteCollection || model.modelName };
 
         async.auto({
