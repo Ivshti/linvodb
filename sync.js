@@ -24,7 +24,7 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
         if (! api.user) return cb();
         if (! dirty) return cb();
 
-        var remoteMeta, localMeta, modifications, deletes,
+        var remoteMeta, localMeta, modifications, deletes = [],
             baseQuery = { collection: remoteCollection || model.modelName };
 
         async.auto({
@@ -59,7 +59,7 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
                 
                 /* Slightly tricky part: deletes; we just need all IDs that are not here, but on the remote server, 
                  * which were not modified between lastSync and now */
-                deletes = _.difference(
+                if (syncInfo.lastSync) deletes = _.difference(
                     _.difference(remoteMeta.map(function(m){ return m[0] }), localMeta.map(function(m){ return m[0] })),
                     modifications.map(function(m){ return m[0] })
                 );
