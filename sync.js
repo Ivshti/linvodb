@@ -74,7 +74,10 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
                     //console.log("pushing "+updatedItems.length+" up, "+deletes.length+" deletes");//debug
                     
                     updatedItems = updatedItems.map(function(x) { 
-                        return _.extend({ }, x, { _mtime: x._mtime.getTime(), _ctime: x._ctime.getTime() })
+                        var item = _.extend({ }, x);
+                        if (x._mtime) x._mtime = x._mtime.getTime();
+                        if (x._ctime) x._ctime = x._ctime.getTime();
+                        return item;
                     });
                     
                     api.request("datastorePut", _.extend({ }, baseQuery, { changes: 
@@ -95,8 +98,8 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
                 {
                     //console.log("pulling "+results.length+" down");//debug
                     async.each(results, function(res, cb) {
-                        res._ctime = new Date(res._ctime);
-                        res._force_mtime = new Date(res._mtime);
+                        res._ctime = new Date(res._ctime || 0);
+                        res._force_mtime = new Date(res._mtime || 0);
                         collection.update({ _id: res._id }, res, { upsert: true }, cb);
                     }, function(err)
                     {
