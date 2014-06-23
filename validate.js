@@ -85,6 +85,10 @@ var defaultOptions = {
  * */
 var specAllowedKeys = ["type", "index", "unique", "sparse", "default", "ref"];
 
+/*
+ * TODO: only re-validate changed fields; this would be hard to implement now, but when object
+ * watchers are implemented on-the-fly validation would be a good option
+ */
 function validate(object, spec, options)
 {
     var result, prop, propResult;
