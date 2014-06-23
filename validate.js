@@ -76,10 +76,6 @@ var globalSpec = {
     "_ttl": "number"
 };
 
-var defaultOptions = {
-    strict: true
-};
-
 /* We can pass an object as a spec which really describes a single type, and not a sub-object
  * e.g. { type: "string", index: true }
  * */
@@ -92,7 +88,7 @@ var specAllowedKeys = ["type", "index", "unique", "sparse", "default", "ref"];
 function validate(object, spec, options)
 {
     var result, prop, propResult;
-    var options = _.extend({}, defaultOptions, options || {});
+    var options = options ? _.extend({ strict: true }, options) : { strict: true };
     
     if (validate.isSpecialSpec(spec)) spec = spec.type;
 
