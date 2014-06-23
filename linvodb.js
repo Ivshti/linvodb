@@ -65,7 +65,7 @@ linvodb.Model = function Model(name, schema, options)
         if (doc && doc.constructor.name == "Document")
             return doc;
 
-        _.extend(this, doc || {});
+		if (doc) for (key in doc) this[key] = doc[key];
         this.validate();
         if (model.construct) model.construct.apply(this);
     };
