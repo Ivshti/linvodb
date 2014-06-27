@@ -57,6 +57,6 @@ var desiredResult = {
     test: [0,0,0,0]
 };
 
-var result = validate(obj, schema);
+var result = validate(obj, schema, {strict: true});
 console.log(result);
 console.log("is equal to expected result =>", _.isEqual(desiredResult, result));
