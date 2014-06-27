@@ -27,7 +27,7 @@ linvodb.Model = function Model(name, schema, options)
     if (typeof(name) != "string") throw new Error("model name must be a string");
     if (typeof(schema) != "object") throw new Error("model schema must be an object");
 
-    var options = options ? _.extend({ strict: true }, options) : { strict: true });
+    var options = options ? _.extend({ strict: true }, options) : { strict: true };
     
     var storeName = options.collection || name;
     var db = linvodb.stores[storeName] = linvodb.stores[storeName] 
