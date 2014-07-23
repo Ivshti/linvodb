@@ -184,6 +184,8 @@ linvodb.Model = function Model(name, schema, options)
     // Query
     model.find = function(query, cb) 
     {
+        model.emit("beforefind", query); // this will give us the ability to modify the query
+
         var cur = db.find(query || { }),
             exec = _.bind(cur.exec, cur),
             toPopulate = [];
