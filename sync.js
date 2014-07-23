@@ -88,10 +88,10 @@ module.exports = function setupSync(model, collection, api, options)
                     });
                 });
             }],
-            finalize: ["push_remote", "push_local", function(callback)
+            finalize: ["push_remote", "pull_local", function(callback)
             {
                 status("sync finished");
-                
+
                 if (pull.length) model.emit("updated", { dontSync: true });
                 callback();
             }]
