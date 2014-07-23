@@ -2,13 +2,14 @@ var async = require("async"),
     fs = require("fs"),
     _ = require("underscore");
 
-module.exports = function setupSync(model, collection, api, remoteCollection)
+module.exports = function setupSync(model, collection, api, options)
 {
-    var syncInfoPath = collection.filename+".sync";
-    var syncInfo = { lastSync: 0 };
-    if (fs.existsSync(syncInfoPath)) try { syncInfo = JSON.parse(fs.readFileSync(syncInfoPath)) } catch(e) { };
-    var saveSyncInfo = function() { fs.writeFileSync(syncInfoPath, JSON.stringify(syncInfo)) };
-    
+    var options = options || {};
+
+    var status = function(s) {
+        if (options.log) console.log("LinvoDB Sync: "+s);
+    };
+
     var dirty = false;
     var triggerSync = function(cb)
     { 
@@ -24,79 +25,58 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
         if (! api.user) return cb();
         if (! dirty) return cb();
 
-        var remoteMeta, localMeta, modifications, deletes = [],
-            baseQuery = { collection: remoteCollection || model.modelName };
+        var baseQuery = { collection: options.remoteCollection || model.modelName };
+        var remote = {}, push = [], pull = [];
 
         async.auto({
             retrieve_remote: function(callback)
             {
-                api.request("datastoreMeta", { collection: remoteCollection || model.modelName }, function(err, meta)
-                {
-                    remoteMeta = meta;
-                    callback(err);
+                api.request("datastoreMeta", baseQuery, function(err, meta)
+                { 
+                    if (err) return cb(err);
+
+                    meta.forEach(function(m) { remote[m[0]] = new Date(m[1]).getTime() });
+                    callback();
                 });
             },
-            retrieve_local: function(callback)
+            compile_changes: ["retrieve_remote", function(callback)
             {
-                collection.find({}, function(err, results)
+                collection.find({ }, function(err, results)
                 {
-                    localMeta = results.map(function(r) { return [r._id, r._mtime.getTime(), 1] });
-                    callback(err);
+                    if (err) return callback(err);
+
+                    results.forEach(function(r) {
+                        if ((remote[r._id] || 0) > r._mtime.getTime()) pull.push(r._id);
+                        if ((remote[r._id] || 0) < r._mtime.getTime()) push.push(r);
+                        delete remote[r._id]; // already processed
+                    });
+                    pull = pull.concat(_.keys(remote)); // add all non-processed to pull queue
+                    callback();
+
+                    // It's correct to mark the DB before commiting the changes, but when compiling the list of changes
+                    // Until the changes are commited, more changes might occur
+                    dirty = false;                
                 });
-            },
-            compile_changes: ["retrieve_remote", "retrieve_local", function(callback)
-            {
-                // It's correct to mark the DB before commiting the changes, but when compiling the list of changes
-                // Until the changes are commited, more changes might occur
-                dirty = false;
-                // TODO: set that back to true if anything fails
-                
-                modifications = [].concat(remoteMeta).concat(localMeta)
-                .filter(function(m) { return (m[1] || 0) >= (syncInfo.lastSync||0) })
-                .sort(function(a, b) { return a[1] - b[1] });
-                /* TODO: solve conflicts
-                 */
-                
-                /* Slightly tricky part: deletes; we just need all IDs that are not here, but on the remote server, 
-                 * which were not modified between lastSync and now */
-                if (syncInfo.lastSync) deletes = _.difference(
-                    _.difference(remoteMeta.map(function(m){ return m[0] }), localMeta.map(function(m){ return m[0] })),
-                    modifications.map(function(m){ return m[0] })
-                );
-                
-                callback();
             }],
             push_remote: ["compile_changes", function(callback)
             {
-                var ids = modifications.filter(function(m) { return m[2] }).map(function(m) { return m[0] });
-                collection.find({ _id: { $in: ids } }, function(err, updatedItems)
-                {
-                    //console.log("pushing "+updatedItems.length+" up, "+deletes.length+" deletes");//debug
-                    
-                    updatedItems = updatedItems.map(function(x) { 
+                status("pushing "+push.length+" changes to remote");
+
+                api.request("datastorePut", _.extend({ }, baseQuery, { changes: 
+                    push.map(function(x) { 
                         var item = _.extend({ }, x);
                         if (x._mtime) x._mtime = x._mtime.getTime();
                         if (x._ctime) x._ctime = x._ctime.getTime();
                         return item;
-                    });
-                    
-                    api.request("datastorePut", _.extend({ }, baseQuery, { changes: 
-                        deletes.map(function(id) { return { _id: id, _delete: true } })
-                        .concat(updatedItems)
-                    }), function(err)
-                    {
-                        if (err) console.error(err);
-                        callback();
-                    });
-                });
+                    })
+                }), callback);
             }],
-            push_local: ["compile_changes", function(callback)
+            pull_local: ["compile_changes", function(callback)
             {
-                api.request("datastoreGet", _.extend({ }, baseQuery, { 
-                    ids: modifications.filter(function(m) { return ! m[2] }).map(function(m) { return m[0] })
-                }), function(err, results)
+                api.request("datastoreGet", _.extend({ }, baseQuery, { ids: pull }), function(err, results)
                 {
-                    //console.log("pulling "+results.length+" down");//debug
+                    status("pulled "+results.length+" down");
+
                     async.each(results, function(res, cb) {
                         res._ctime = new Date(res._ctime || 0);
                         res._force_mtime = new Date(res._mtime || 0);
@@ -108,14 +88,11 @@ module.exports = function setupSync(model, collection, api, remoteCollection)
                     });
                 });
             }],
-            update_last_sync: ["push_remote", "push_local", function(callback)
+            finalize: ["push_remote", "push_local", function(callback)
             {
-                syncInfo.lastSync = Date.now();
-                saveSyncInfo();
+                status("sync finished");
                 
-                if (modifications.some(function(m) { return ! m[2] }))
-                    model.emit("updated", { dontSync: true });
-
+                if (pull.length) model.emit("updated", { dontSync: true });
                 callback();
             }]
         }, cb);
