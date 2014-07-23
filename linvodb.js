@@ -152,6 +152,34 @@ linvodb.Model = function Model(name, schema, options)
         
         return handle;
     };
+    var populateRefs = function(result, path, callback)
+    {
+        var schm = mpath.get(path, schema);
+        if (Array.isArray(schm)) schm = schm[0];
+        
+        if (! schm.ref) return callback();
+        if (! linvodb.models[schm.ref]) return callback();
+        
+        var ids = _.flatten(result.map(function(x) { return mpath.get(path, x) }))
+            .filter(function(x) { return x });
+        
+        linvodb.models[schm.ref].find({ _id: { $in: ids } }, function(err, docs) // Retrieve objects we're looking for
+        {
+            if (err) return callback(err);
+            
+            var indexed = _.indexBy(docs, "_id");
+            
+            // Attach objects in their places
+            result.forEach(function(res)
+            {
+                var val = mpath.get(path, res);
+                if (Array.isArray(val)) mpath.set(path, val.map(function(id) { return indexed[id] }), res);
+                else mpath.set(path, indexed[val], res);
+            });
+
+            callback();
+        });
+    };
      
     // Query
     model.find = function(query, cb) 
@@ -168,44 +196,7 @@ linvodb.Model = function Model(name, schema, options)
                     return cb(err);
                 
                 var result = res.map(toModelInstance).filter(removeExpired);
-                
-                /* 
-                 * 
-                 * TODO: implement a hooks system and then use that to populate
-                 * 
-                 */
-                async.each(toPopulate, function(path, callback)
-                {
-                    var schm = mpath.get(path, schema);
-                    if (Array.isArray(schm)) schm = schm[0];
-                    
-                    if (! schm.ref) return callback();
-                    if (! linvodb.models[schm.ref]) return callback();
-                    
-                    var ids = _.flatten(result.map(function(x) { return mpath.get(path, x) }))
-                        .filter(function(x) { return x });
-                    
-                    linvodb.models[schm.ref].find({ _id: { $in: ids } }, function(err, docs)
-                    {
-                        if (err) return callback();
-                        
-                        var indexed = _.indexBy(docs, "_id");
-                        
-                        result.forEach(function(res)
-                        {
-                            var val = mpath.get(path, res);
-                            if (Array.isArray(val))
-                                mpath.set(path, val.map(function(id) { return indexed[id] }), res);
-                            else
-                                mpath.set(path, indexed[val], res);
-                        });
-
-                        callback();
-                    });
-                }, function()
-                {
-                    cb && cb(err, result);
-                });                
+                async.each(toPopulate, populateRefs.bind(null, result), function() { cb && cb(err, result) });                
             });
         };
         cur.live = function(options) { return liveQuery(cur, options) };
