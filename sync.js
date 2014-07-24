@@ -33,7 +33,7 @@ module.exports = function setupSync(model, collection, api, options)
             {
                 api.request("datastoreMeta", baseQuery, function(err, meta)
                 { 
-                    if (err) return cb(err);
+                    if (err) return callback(err);
 
                     meta.forEach(function(m) { remote[m[0]] = new Date(m[1]).getTime() });
                     callback();
@@ -75,6 +75,8 @@ module.exports = function setupSync(model, collection, api, options)
             {
                 api.request("datastoreGet", _.extend({ }, baseQuery, { ids: pull }), function(err, results)
                 {
+                    if (err) return callback(err);
+
                     status("pulled "+results.length+" down");
 
                     async.each(results, function(res, cb) {
