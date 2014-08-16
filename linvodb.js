@@ -31,7 +31,7 @@ linvodb.Model = function Model(name, schema, options)
     
     var storeName = options.collection || name;
     var db = linvodb.stores[storeName] = linvodb.stores[storeName] 
-		|| new nedb({ filename: path.join(linvodb.dbPath, storeName), autoload: true });
+		|| new nedb({ filename: path.join(linvodb.dbPath, storeName), autoload: true, inMemoryOnly: options.inmemory });
 
     /* Create indexes
      */
