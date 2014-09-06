@@ -253,7 +253,8 @@ linvodb.Model = function Model(name, schema, options)
     };
 
     // Support event emitting
-    _.extend(model, new EventEmitter());
+    var emitter = new EventEmitter();
+    for (prop in emitter) model[prop] = emitter[prop];
 
     model.modelName = name;
     model.store = db;
