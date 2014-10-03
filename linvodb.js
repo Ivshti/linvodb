@@ -239,9 +239,9 @@ linvodb.Model = function Model(name, schema, options)
 
     /* Statics that extend the model
      */
-    model.virtual = function(name, fn)
+    model.virtual = function(name, getter, setter)
     { 
-        Object.defineProperty(model.prototype, name, { get: fn });
+        Object.defineProperty(model.prototype, name, { get: getter, set: setter });
     };
     model.method = function(name, fn)
     {
