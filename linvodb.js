@@ -53,8 +53,8 @@ linvodb.Model = function Model(name, schema, options)
     /* Small helpers/utilities
      */
     var hookEvent = function(ev, fn) {
-        return function() {
-            model.emit(ev);
+        return function(err, c) {
+            if (c) model.emit(ev);
             fn && fn.apply(this, arguments);
         };
     };
