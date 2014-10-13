@@ -134,6 +134,8 @@ linvodb.Model = function Model(name, schema, options)
         var handle = { res: [], err: null };
         var update = function()
         {
+            debugLog("update live query "+JSON.stringify(cur.query));
+
             // TODO: maybe check if the result is actually different before calling liveQueryUpdate?
             // instead of full-on comparison we can just do _mtime arrays
             cur.exec(function(err, res)
@@ -184,6 +186,8 @@ linvodb.Model = function Model(name, schema, options)
     // Query
     model.find = function(query, cb) 
     {
+        debugLog("find "+JSON.stringify(query));
+
         model.emit("beforefind", query); // this will give us the ability to modify the query
 
         var cur = db.find(query || { }),
@@ -217,16 +221,22 @@ linvodb.Model = function Model(name, schema, options)
     // Modification
     model.remove = function(query, options)
     {
+        debugLog("remove "+JSON.stringify(query));
+
         var cb = (typeof(arguments[arguments.length-1]) == "function") && arguments[arguments.length-1];
             options = (options && typeof(options)=="object") ? options : {};
         db.remove(query, options, hookEvent("updated", cb))
     };
     model.update = function(query, update, options, cb)
     { 
+        debugLog("update "+JSON.stringify(query));
+
         db.update(query, update, options, hookEvent("updated", cb))
     };
     model.insert = function(docs, cb)
     { 
+        debugLog("insert "+docs.length+" docs");
+
         db.insert(
             docs.map(toModelInstance).map(function(doc) { return doc.toObject() }),
             hookEvent("updated", cb)
@@ -252,9 +262,15 @@ linvodb.Model = function Model(name, schema, options)
         model[name] = fn;
     };
 
+
     // Support event emitting
     var emitter = new EventEmitter();
     for (prop in emitter) model[prop] = emitter[prop];
+
+    // Internal helpers
+    function debugLog() {
+        if (linvodb.debug) console.log("linvodb/"+process.uptime()+" "+name+": "+log);
+    }; 
 
     model.modelName = name;
     model.store = db;
