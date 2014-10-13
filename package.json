@@ -1,7 +1,7 @@
 {
   "name": "linvodb",
   "preferGlobal": true,
-  "version": "0.0.18",
+  "version": "0.0.19",
   "author": "Ivo Georgiev <ivo@linvo.com>",
   "description": "LinvoDB - an embedded datastore for node-webkit applications",
   "main": "./linvodb",
