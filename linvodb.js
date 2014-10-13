@@ -268,8 +268,8 @@ linvodb.Model = function Model(name, schema, options)
     for (prop in emitter) model[prop] = emitter[prop];
 
     // Internal helpers
-    function debugLog() {
-        if (linvodb.debug) console.log("linvodb/"+process.uptime()+" "+name+": "+log);
+    function debugLog(log) {
+        if (linvodb.debug) console.log("linvodb:"+process.uptime()+" "+name+": "+log);
     }; 
 
     model.modelName = name;
