@@ -8,6 +8,8 @@ var EventEmitter = require("events").EventEmitter;
 var validator = require("./validate");
 var setupSync = require("./sync");
 
+var LIVEQUERY_DEBOUNCE = 500;
+
 var linvodb = { };
 
 linvodb.init = function(dataPath)
@@ -88,6 +90,8 @@ linvodb.Model = function Model(name, schema, options)
     
     model.prototype.save = function(cb)
     {
+        debugLog("save individual doc "+this._id);
+       
         this.validate();
         var doc = this.toObject(), // we need to copy this in order to avoid Document instances getting into NeDB
             self = this;
@@ -104,7 +108,7 @@ linvodb.Model = function Model(name, schema, options)
             cb && cb(null, self);
         }));
     };
-    model.prototype.remove = function(cb) { db.remove({ _id: this._id }, hookEvent("updated", cb)) };
+    model.prototype.remove = function(cb) { debugLog("remove individual doc "+this._id); db.remove({ _id: this._id }, hookEvent("updated", cb)) };
     
     model.prototype.toObject = function(validate)
     {
@@ -132,7 +136,7 @@ linvodb.Model = function Model(name, schema, options)
         options.aggregate = options.aggregate || function(res, cb) { cb(res) };
 
         var handle = { res: [], err: null };
-        var update = function()
+        var update = _.debounce(function()
         {
             debugLog("update live query "+JSON.stringify(cur.query));
 
@@ -146,7 +150,7 @@ linvodb.Model = function Model(name, schema, options)
                     model.emit("liveQueryUpdate");               
                 });
             });
-        };
+        }, LIVEQUERY_DEBOUNCE);
         update();
         model.on("updated", update);
         // OR we can figure out if there are going to be modifications before actually re-quering
