@@ -108,7 +108,11 @@ linvodb.Model = function Model(name, schema, options)
             cb && cb(null, self);
         }));
     };
-    model.prototype.remove = function(cb) { debugLog("remove individual doc "+this._id); db.remove({ _id: this._id }, hookEvent("updated", cb)) };
+    model.prototype.remove = function(cb) { 
+        if (! this._id) return cb();
+        debugLog("remove individual doc "+this._id);
+        db.remove({ _id: this._id }, hookEvent("updated", cb));
+    };
     
     model.prototype.toObject = function(validate)
     {
